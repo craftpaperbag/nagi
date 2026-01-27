@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { redisClient } from '@/lib/redis'; // redisClient をインポート
+import { redisClient } from '@/lib/redis'; // redisClient を名前付きインポート
 import { generateSessionId, setSessionCookie } from '@/lib/auth'; // セッション生成とCookie設定用のヘルパー関数（後述）
 
 export async function GET(request: Request) {
