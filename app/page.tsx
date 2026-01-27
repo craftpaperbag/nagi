@@ -1,10 +1,18 @@
-import { createClient } from 'redis';
+import { createClient } from 'redis'; // redisパッケージからインポート
 
 // ログデータの型定義
 interface LogEntry {
   ts: number;
   app: string;
 }
+
+// Redisクライアントの初期化
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
+});
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.connect().catch(console.error); // 接続を試みる
 
 async function getTodaysLogs(): Promise<LogEntry[]> {
   // 仮のuser_id。認証機能実装時に置き換える。
@@ -13,22 +21,15 @@ async function getTodaysLogs(): Promise<LogEntry[]> {
 
   try {
     // logs:{user_id}:{YYYY-MM-DD} のリストから全ログを取得
-    const logStrings = await kv.lrange<string>(`logs:${userId}:${today}`, 0, -1);
+    // redisパッケージではlRangeを使用
+    const logStrings = await redisClient.lRange(`logs:${userId}:${today}`, 0, -1);
     // JSON文字列をパースしてLogEntryの配列に変換
     const logs: LogEntry[] = logStrings.map(logString => JSON.parse(logString));
     return logs;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching logs:', error);
     return []; // エラー時は空配列を返す
   }
-}
-
-export default function Home() {
-  // このコンポーネントはクライアントサイドでレンダリングされるため、
-  // サーバーサイドで取得したデータを表示するには工夫が必要です。
-  // ここでは、サーバーコンポーネントとしてログを取得し、表示します。
-  // await getTodaysLogs() を直接呼び出す形に変更します。
-  return <HomePage />;
 }
 
 // サーバーコンポーネントとしてログを取得し表示するコンポーネント
@@ -54,3 +55,6 @@ async function HomePage() {
     </main>
   );
 }
+
+// Homeコンポーネントをデフォルトエクスポート
+export default HomePage;
