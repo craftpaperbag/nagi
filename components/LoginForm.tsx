@@ -30,7 +30,7 @@ export default function LoginForm() {
   if (status === 'success') {
     return (
       <div className="text-center p-8 animate-in fade-in duration-700">
-        <p className="text-gray-500 font-light">メールを送信しました。届いたリンクから静かにログインしてください。</p>
+        <p className="text-gray-500 font-light">メール送ったよ！届いたリンクから、そっとログインしてね。</p>
       </div>
     );
   }
@@ -56,7 +56,7 @@ export default function LoginForm() {
       </button>
       {status === 'error' && (
         <p className="text-xs text-red-300 text-center font-light">
-          何かがうまくいきませんでした。もう一度お試しください。
+          なんかうまくいかなかったみたい。もう一回試してみてね。
         </p>
       )}
     </form>
