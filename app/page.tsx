@@ -1,43 +1,71 @@
-import { redisClient } from '@/lib/redis'; // 名前付きインポートに変更
-import LoginForm from '@/components/LoginForm'; // 追加
+import { cookies } from 'next/headers';
+import { redisClient } from '@/lib/redis';
+import LoginForm from '@/components/LoginForm';
 
-// ログデータの型定義
+// 仮のLogEntryインターフェースとgetTodaysLogs関数
 interface LogEntry {
   ts: number;
   app: string;
 }
 
 async function getTodaysLogs(userId: string): Promise<LogEntry[]> {
-  const today = new Date().toISOString().split('T')[0].replace(/-/g, ''); // YYYYMMDD 形式
+  const today = new Date().toISOString().split('T')[0];
   const logs = await redisClient.lRange(`logs:${userId}:${today}`, 0, -1);
   return logs.map(log => JSON.parse(log));
 }
 
 export default async function Home() {
-  // TODO: 認証機能実装後、実際の userId を取得する
-  const userId = 'user_12345'; // 仮の user_id
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
 
-  const logs = await getTodaysLogs(userId);
+  let user = null;
+  let logs: LogEntry[] = [];
+
+  if (sessionId) {
+    const userId = await redisClient.get(`session:${sessionId}`);
+    if (userId) {
+      const userData = await redisClient.get(`user:${userId}`);
+      if (userData) {
+        user = JSON.parse(userData);
+        logs = await getTodaysLogs(userId);
+      }
+    }
+  }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <LoginForm />
-      </div>
-
-      <div className="mt-10 w-full max-w-5xl">
-        <h2 className="text-2xl font-bold mb-4">今日のログ</h2>
-        {logs.length > 0 ? (
-          <ul className="space-y-2">
-            {logs.map((log, index) => (
-              <li key={index} className="bg-gray-800 p-3 rounded-md flex justify-between items-center">
-                <span>{new Date(log.ts * 1000).toLocaleTimeString()}</span>
-                <span>{log.app}</span>
-              </li>
-            ))}
-          </ul>
+    <main className="min-h-screen p-8">
+      <div className="max-w-2xl mx-auto">
+        {!user ? (
+          <LoginForm />
         ) : (
-          <p>本日のログはありません。</p>
+          <div className="flex flex-col gap-8">
+            <header className="flex justify-between items-center border-b pb-4">
+              <p className="text-sm text-gray-500">{user.email} としてログイン中</p>
+              <form action="/api/auth/logout" method="POST">
+                <button type="submit" className="text-sm text-red-500 hover:underline">
+                  ログアウト
+                </button>
+              </form>
+            </header>
+            
+            <section>
+              <h2 className="text-xl font-bold mb-4">本日のログ</h2>
+              {logs.length > 0 ? (
+                <ul className="flex flex-col gap-2">
+                  {logs.map((log, i) => (
+                    <li key={i} className="p-3 bg-gray-50 rounded">
+                      <span className="font-mono text-sm mr-4">
+                        {new Date(log.ts * 1000).toLocaleTimeString()} {/* Unix timestampはミリ秒ではないため1000倍 */}
+                      </span>
+                      {log.app}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">本日のログはありません</p>
+              )}
+            </section>
+          </div>
         )}
       </div>
     </main>
