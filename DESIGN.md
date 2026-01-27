@@ -47,12 +47,23 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
 * **User Profile**
     * Key: `user:{user_id}`
     * Value: `{ "id": "...", "email": "...", "created_at": "..." }`
-* **Session**
+* **Session (Browser)**
     * Key: `session:{session_id}`
     * Value: `{user_id}`
     * TTL: 30日
 
-### B. ログデータ (Core)
+### B. APIキー (iOS Shortcut用)
+ブラウザのセッションとは別に、ショートカット用の永続的な認証キーを発行する。
+* **API Key Lookup**
+    * Key: `api_key:{random_uuid_key}`
+    * Value: `{user_id}`
+    * 用途: APIリクエスト時の認証高速化。
+* **User's API Key**
+    * Key: `user:{user_id}:api_key`
+    * Value: `{random_uuid_key}`
+    * 用途: ダッシュボードでのキー表示・再生成用。
+
+### C. ログデータ (Core)
 「開いた/閉じた」の状態は持たず、事実（アプリ名）のみを時系列リストで保持する。
 
 * **Timeline Logs**
@@ -61,7 +72,7 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
     * Value (JSON): `{"ts": 1701501200, "app": "Instagram"}`
     * TTL: 必要に応じて設定（例: 1年）
 
-### C. アプリ一覧 (Suggestion)
+### D. アプリ一覧 (Suggestion)
 ユーザーが過去に使用したアプリ名のユニークリスト。
 
 * **App List**
@@ -73,12 +84,15 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
 
 ### POST `/api/log`
 iOSショートカットから叩かれるエンドポイント。
+* **Headers:** `Authorization: Bearer <API_KEY>`
+    * ※ セキュリティ強化のためURLパラメータ渡しは廃止。
 * **Body:** `{"app": "Instagram"}`
 * **Logic:**
-    1.  HeaderのBearer Token等でユーザー認証（またはURLパラメータにUser IDハッシュを含める簡易認証）。
-    2.  `logs:{user_id}:{today}` に `{ts: now, app: body.app}` をPush。
-    3.  `apps:{user_id}` に `body.app` をAdd。
-    4.  Response: 200 OK (Empty)
+    1.  Headerからトークンを取得し、`Bearer ` プレフィックスを除去。
+    2.  KV `api_key:{token}` を検索し、`user_id` を特定（存在しない場合は 401 Unauthorized）。
+    3.  `logs:{user_id}:{today}` に `{ts: now, app: body.app}` をPush。
+    4.  `apps:{user_id}` に `body.app` をAdd。
+    5.  Response: 200 OK (Empty)
 
 ### POST `/api/auth/login`
 * **Body:** `{"email": "..."}`
@@ -91,7 +105,7 @@ iOSショートカットから叩かれるエンドポイント。
 * **Query:** `?token=...`
 * **Logic:**
     1.  KVからトークン検証＆削除。
-    2.  ユーザー特定（存在しなければ新規作成）。
+    2.  ユーザー特定（存在しなければ新規作成し、同時にAPIキーも生成）。
     3.  セッションID (UUID) 生成＆KV保存。
     4.  **Cookie設定:** `HttpOnly`, `Secure`, `SameSite=Lax`。
     5.  ダッシュボードへリダイレクト。
