@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     });
 
     // 4. Cookie設定
-    const response = NextResponse.redirect(new URL('/dashboard', request.url)); // ダッシュボードへリダイレクト
+    const response = NextResponse.redirect(new URL('/', request.url)); // トップページへリダイレクト
     setSessionCookie(response, sessionId); // セッションCookie設定ヘルパー
 
     return response;
