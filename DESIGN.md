@@ -12,11 +12,15 @@
 1.  **ログイン:**
     * メールアドレスのみで登録・ログイン完了（Magic Link）。
     * パスワードは存在しない。
-2.  **データ記録:**
+2.  **初期セットアップ (Magic Setup):**
+    * ユーザーはショートカットをインストール後、Web画面の「連携」ボタンをタップするだけ。
+    * Webアプリがショートカットを自動起動し、APIキーを裏側で渡して保存させる。
+    * 面倒なコピペ作業は不要。
+3.  **データ記録:**
     * iOSショートカット（Automation）を利用。
     * アプリを開いた時・閉じた時に、バックグラウンドで現在の「アプリ名」だけをサーバーに送信する。
     * ユーザーの操作は不要。
-3.  **振り返り (Daily Summary):**
+4.  **振り返り (Daily Summary):**
     * 1日の終わりにメールでサマリーが届く（任意）。
     * リンクを開くとタイムラインが表示される。
     * **可視化のロジック:**
@@ -31,7 +35,7 @@
 * **Auth:** Custom Magic Link Auth (JWT or Session ID via Cookies)
 * **Email:** Resend
 * **Hosting:** Vercel
-* **Client:** iOS Shortcuts (Web Hook)
+* **Client:** iOS Shortcuts (Web Hook + iCloud Drive for Config)
 
 ## 4. データ構造 (Redis Schema)
 RDBではなくKVSを採用し、時系列データ（Stream）として管理する。
@@ -85,7 +89,6 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
 ### POST `/api/log`
 iOSショートカットから叩かれるエンドポイント。
 * **Headers:** `Authorization: Bearer <API_KEY>`
-    * ※ セキュリティ強化のためURLパラメータ渡しは廃止。
 * **Body:** `{"app": "Instagram"}`
 * **Logic:**
     1.  Headerからトークンを取得し、`Bearer ` プレフィックスを除去。
@@ -116,3 +119,21 @@ iOSショートカットから叩かれるエンドポイント。
     * ログ `app: A` 到着 → **「石（拘束）」モード開始**
     * ログ `app: B` 到着 (A以外) → **「石」終了、「波（自由）」モード開始**
     * ※ 一定時間（例: 15分）ログがない場合は自動で「波」とみなす等の補正を行う。
+
+## 7. iOSショートカット設計
+Webからキーを受け取り、ローカルに保存するロジックを実装する。
+
+### ショートカットの処理フロー
+1.  **入力チェック:** `Shortcut Input`（外部からの入力）があるか確認。
+    * **ある場合 (セットアップモード):**
+        * 入力を「APIキー」として、iCloud Drive上の `nagi/config.txt` に保存（上書き）。
+        * 「設定が完了しました」と通知を出して終了。
+    * **ない場合 (通常ログモード):**
+        * iCloud Driveの `nagi/config.txt` からAPIキーを読み込む。
+        * ファイルがない場合は「設定が必要です」と通知して終了。
+        * API `/api/log` に `Authorization: Bearer {読み込んだキー}` を付けてリクエスト送信。
+
+### Web側の連携ボタン実装
+* **Action:** 以下のURLスキームを叩くリンクを設置。
+    * `shortcuts://run-shortcut?name=nagi&input={USER_API_KEY}`
+    * ※ `name=nagi` は配布するショートカット名と一致させる。
