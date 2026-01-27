@@ -1,18 +1,10 @@
-import { createClient } from 'redis'; // redisパッケージからインポート
+import redisClient from '@/lib/redis'; // lib/redis.ts からインポート
 
 // ログデータの型定義
 interface LogEntry {
   ts: number;
   app: string;
 }
-
-// Redisクライアントの初期化
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
-});
-
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
-redisClient.connect().catch(console.error); // 接続を試みる
 
 async function getTodaysLogs(): Promise<LogEntry[]> {
   // 仮のuser_id。認証機能実装時に置き換える。
