@@ -2,16 +2,17 @@ import { cookies } from 'next/headers';
 import { redisClient } from '@/lib/redis';
 import LoginForm from '@/components/LoginForm';
 
-// 仮のLogEntryインターフェースとgetTodaysLogs関数
+// 仮のLogEntryインターフェース
 interface LogEntry {
-  ts: number;
+  ts: number; // ミリ秒
   app: string;
 }
 
-async function getTodaysLogs(userId: string): Promise<LogEntry[]> {
-  const today = new Date().toISOString().split('T')[0];
-  const logs = await redisClient.lRange(`logs:${userId}:${today}`, 0, -1);
-  return logs.map(log => JSON.parse(log));
+// 全ログを取得する関数に変更
+async function getAllLogs(userId: string): Promise<LogEntry[]> {
+  const logs = await redisClient.lRange(`logs:${userId}`, 0, -1);
+  // 新しい順に表示するため、取得後にreverseする
+  return logs.map(log => JSON.parse(log)).reverse();
 }
 
 export default async function Home() {
@@ -27,7 +28,7 @@ export default async function Home() {
       const userData = await redisClient.get(`user:${userId}`);
       if (userData) {
         user = JSON.parse(userData);
-        logs = await getTodaysLogs(userId);
+        logs = await getAllLogs(userId); // 全ログ取得
       }
     }
   }
@@ -39,30 +40,37 @@ export default async function Home() {
           <LoginForm />
         ) : (
           <div className="flex flex-col gap-8">
-            <header className="flex justify-between items-center border-b pb-4">
-              <p className="text-sm text-gray-500">{user.email} としてログイン中</p>
-              <form action="/api/auth/logout" method="POST">
-                <button type="submit" className="text-sm text-red-500 hover:underline">
-                  ログアウト
-                </button>
-              </form>
+            <header className="flex flex-col gap-4 border-b pb-4">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-500">{user.email} としてログイン中</p>
+                <form action="/api/auth/logout" method="POST">
+                  <button type="submit" className="text-sm text-red-500 hover:underline">
+                    ログアウト
+                  </button>
+                </form>
+              </div>
+              {/* APIトークンの表示 */}
+              <div className="bg-gray-100 p-3 rounded text-xs break-all">
+                <p className="font-bold mb-1 text-gray-600">Your API Token (Bearer):</p>
+                <code className="text-blue-600">{user.api_token}</code>
+              </div>
             </header>
             
             <section>
-              <h2 className="text-xl font-bold mb-4">本日のログ</h2>
+              <h2 className="text-xl font-bold mb-4">すべてのログ (開発用表示)</h2>
               {logs.length > 0 ? (
                 <ul className="flex flex-col gap-2">
                   {logs.map((log, i) => (
                     <li key={i} className="p-3 bg-gray-50 rounded">
-                      <span className="font-mono text-sm mr-4">
-                        {new Date(log.ts * 1000).toLocaleTimeString()} {/* Unix timestampはミリ秒ではないため1000倍 */}
+                      <span className="font-mono text-sm mr-4 text-gray-400">
+                        {new Date(log.ts).toLocaleString()} {/* ミリ秒なのでそのまま渡す */}
                       </span>
-                      {log.app}
+                      <span className="font-medium">{log.app}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500">本日のログはありません</p>
+                <p className="text-gray-500">ログはありません</p>
               )}
             </section>
           </div>

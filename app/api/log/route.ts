@@ -1,22 +1,22 @@
 // app/api/log/route.ts
-import { createClient } from 'redis';
 import { NextResponse } from 'next/server';
-
-// --- Redis Client Setup ---
-// 環境変数からRedisのURLを取得するか、ローカルのデフォルトURLを使用
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-const redisClient = createClient({ url: redisUrl });
-
-redisClient.on('error', (err) => console.error('Redis Client Error:', err));
-
-// Redisクライアントを接続します。
-// トップレベルでのconnectはNext.jsのサーバーレス環境で注意が必要ですが、
-// ここではシンプルに実装します。
-redisClient.connect().catch(console.error);
+import { redisClient } from '@/lib/redis';
 
 // --- API Logic ---
 export async function POST(request: Request) {
-  // リクエストボディからJSONをパース
+  // 1. Bearerトークン認証
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const token = authHeader.split(' ')[1];
+  const userId = await redisClient.get(`api_token:${token}`);
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+  }
+
+  // 2. リクエストボディのパース
   let requestBody;
   try {
     requestBody = await request.json();
@@ -26,33 +26,22 @@ export async function POST(request: Request) {
   }
 
   const { app } = requestBody;
-
   // 'app' フィールドのバリデーション
   if (typeof app !== 'string' || app.trim() === '') {
     return NextResponse.json({ error: 'App name is required and must be a non-empty string' }, { status: 400 });
   }
 
-  // --- Data Preparation ---
-  // 仮のuser_id。認証機能実装時に置き換えます。
-  const userId = 'user123';
-  // 現在の日付を YYYY-MM-DD 形式で取得
-  const today = new Date().toISOString().split('T')[0];
-  // 現在のタイムスタンプ (ミリ秒)
-  const timestamp = Date.now();
-
+  // 3. ログの保存 (開発用に日付を外して全件取得しやすくする)
   const logData = {
-    ts: timestamp,
+    ts: Date.now(), // ミリ秒
     app: app.trim(), // 前後の空白を除去
   };
 
   // --- Database Operations ---
   try {
-    // 1. logs:{user_id}:{YYYY-MM-DD} リストにログを追加 (RPUSH)
-    // 設計書: Value (JSON): {"ts": 1701501200, "app": "Instagram"}
-    await redisClient.rPush(`logs:${userId}:${today}`, JSON.stringify(logData));
-
-    // 2. apps:{user_id} セットにアプリ名を追加 (SADD)
-    // 設計書: Value: ["Instagram", "X", "YouTube", ...]
+    // logs:{userId} に集約して保存
+    await redisClient.rPush(`logs:${userId}`, JSON.stringify(logData));
+    // apps:{user_id} セットにアプリ名を追加 (SADD)
     await redisClient.sAdd(`apps:${userId}`, logData.app);
 
     // --- Response ---

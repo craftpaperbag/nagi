@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { redisClient } from '@/lib/redis'; // redisClient を名前付きインポート
 import { generateSessionId, setSessionCookie } from '@/lib/auth'; // セッション生成とCookie設定用のヘルパー関数（後述）
+import { v4 as uuidv4 } from 'uuid'; // uuidをインポート
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -19,13 +20,33 @@ export async function GET(request: Request) {
     await redisClient.del(`auth_token:${token}`);
 
     // 2. ユーザー特定（存在しなければ新規作成）
-    // ここでは簡易的に email を user_id として扱いますが、実際には user テーブル等で管理します。
     let userId = await redisClient.get(`user:email:${email}`);
+    let userData: any;
+
     if (!userId) {
       userId = `user_${Date.now()}`; // 仮の user_id 生成
+      const apiToken = uuidv4(); // API用トークンを生成
+      userData = {
+        id: userId,
+        email: email,
+        api_token: apiToken, // プロファイルに保存
+        created_at: new Date().toISOString()
+      };
+
       await redisClient.set(`user:email:${email}`, userId);
-      // 必要であれば、user:{user_id} のプロファイル情報も作成
-      await redisClient.set(`user:${userId}`, JSON.stringify({ id: userId, email: email, created_at: new Date().toISOString() }));
+      await redisClient.set(`user:${userId}`, JSON.stringify(userData));
+      // トークンからユーザーIDを引けるようにする
+      await redisClient.set(`api_token:${apiToken}`, userId);
+    } else {
+      const existingData = await redisClient.get(`user:${userId}`);
+      userData = existingData ? JSON.parse(existingData) : {};
+
+      // 既存ユーザーにトークンがない場合の補填
+      if (!userData.api_token) {
+        userData.api_token = uuidv4();
+        await redisClient.set(`user:${userId}`, JSON.stringify(userData));
+        await redisClient.set(`api_token:${userData.api_token}`, userId);
+      }
     }
 
     // 3. セッションID (UUID) 生成＆KV保存

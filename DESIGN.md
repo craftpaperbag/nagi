@@ -46,19 +46,22 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
     * Value: `{user_id}`
 * **User Profile**
     * Key: `user:{user_id}`
-    * Value: `{ "id": "...", "email": "...", "created_at": "..." }`
+    * Value: `{ "id": "...", "email": "...", "api_token": "...", "created_at": "..." }`
 * **Session**
     * Key: `session:{session_id}`
     * Value: `{user_id}`
     * TTL: 30日
+* **API Token (New)**
+    * Key: `api_token:{api_token}`
+    * Value: `{user_id}`
 
 ### B. ログデータ (Core)
 「開いた/閉じた」の状態は持たず、事実（アプリ名）のみを時系列リストで保持する。
 
 * **Timeline Logs**
-    * Key: `logs:{user_id}:{YYYY-MM-DD}`
+    * Key: `logs:{user_id}` (開発中: 全件取得のため日付を省略)
     * Type: List (RPUSH)
-    * Value (JSON): `{"ts": 1701501200, "app": "Instagram"}`
+    * Value (JSON): `{"ts": 1701501200000, "app": "Instagram"}` (tsはミリ秒)
     * TTL: 必要に応じて設定（例: 1年）
 
 ### C. アプリ一覧 (Suggestion)
@@ -73,10 +76,11 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
 
 ### POST `/api/log`
 iOSショートカットから叩かれるエンドポイント。
+* **Authentication:** `Authorization: Bearer <api_token>`
 * **Body:** `{"app": "Instagram"}`
 * **Logic:**
-    1.  HeaderのBearer Token等でユーザー認証（またはURLパラメータにUser IDハッシュを含める簡易認証）。
-    2.  `logs:{user_id}:{today}` に `{ts: now, app: body.app}` をPush。
+    1.  HeaderのBearer Tokenでユーザー認証。
+    2.  `logs:{user_id}` に `{ts: now_ms, app: body.app}` をPush。
     3.  `apps:{user_id}` に `body.app` をAdd。
     4.  Response: 200 OK (Empty)
 
@@ -91,7 +95,7 @@ iOSショートカットから叩かれるエンドポイント。
 * **Query:** `?token=...`
 * **Logic:**
     1.  KVからトークン検証＆削除。
-    2.  ユーザー特定（存在しなければ新規作成）。
+    2.  ユーザー特定（存在しなければ新規作成、APIトークンも生成）。
     3.  セッションID (UUID) 生成＆KV保存。
     4.  **Cookie設定:** `HttpOnly`, `Secure`, `SameSite=Lax`。
     5.  ダッシュボードへリダイレクト。
@@ -127,11 +131,12 @@ iOSショートカットから叩かれるエンドポイント。
     -   **ログイン前:** `LoginForm` を表示する。
     -   **ログイン後:**
         -   ヘッダーにログイン中のメールアドレスと「ログアウト」ボタンを表示する。
-        -   今日のログを取得し、タイムスタンプとアプリケーション名を表示する。
-        -   ログがない場合は、「本日のログはありません」というメッセージを表示する。
+        -   **APIトークンを表示する。**
+        -   すべてのログを取得し、タイムスタンプとアプリケーション名を表示する。
+        -   ログがない場合は、「ログはありません」というメッセージを表示する。
 - **データ取得:** `lib/redis.ts` の `redisClient` を使用して、Redisからセッション情報、ユーザー情報、ログデータを取得する。
 - **表示ロジック:**
     -   セッションCookie (`session_id`) の有無でログイン状態を判定する。
     -   ログイン状態に応じて、`LoginForm` またはログ表示エリアを表示する。
     -   ログは `LogEntry` インターフェースに従って表示される。
-    -   ログのタイムスタンプは、Redisから取得したUnixタイムスタンプを元にローカルタイムで表示する。
+    -   ログのタイムスタンプは、Redisから取得したUnixタイムスタンプ（ミリ秒）を元にローカルタイムで表示する。
