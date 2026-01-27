@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { Resend } from 'resend';
-import redisClient from '@/lib/redis';
+import { redisClient } from '@/lib/redis'; // 名前付きインポートに変更
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
