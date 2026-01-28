@@ -10,9 +10,9 @@ interface LogEntry {
 
 // 全ログを取得する関数に変更
 async function getAllLogs(userId: string): Promise<LogEntry[]> {
-  const logs = await redisClient.lRange(`logs:${userId}`, 0, -1);
+  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}`, 0, -1);
   // 新しい順に表示するため、取得後にreverseする
-  return logs.map(log => JSON.parse(log)).reverse();
+  return [...logs].reverse();
 }
 
 export default async function Home() {
@@ -23,11 +23,10 @@ export default async function Home() {
   let logs: LogEntry[] = [];
 
   if (sessionId) {
-    const userId = await redisClient.get(`session:${sessionId}`);
+    const userId = await redisClient.get<string>(`session:${sessionId}`);
     if (userId) {
-      const userData = await redisClient.get(`user:${userId}`);
-      if (userData) {
-        user = JSON.parse(userData);
+      user = await redisClient.get(`user:${userId}`);
+      if (user) {
         logs = await getAllLogs(userId); // 全ログ取得
       }
     }

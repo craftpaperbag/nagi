@@ -27,7 +27,7 @@
 
 ## 3. 技術スタック
 * **Framework:** Next.js (App Router) / TypeScript
-* **Database:** Vercel KV (Redis based)
+* **Database:** Upstash Redis (@upstash/redis)
 * **Auth:** Custom Magic Link Auth (JWT or Session ID via Cookies)
 * **Email:** Resend
 * **Hosting:** Vercel
@@ -134,7 +134,7 @@ iOSショートカットから叩かれるエンドポイント。
         -   **APIトークンを表示する。**
         -   すべてのログを取得し、タイムスタンプとアプリケーション名を表示する。
         -   ログがない場合は、「ログはありません」というメッセージを表示する。
-- **データ取得:** `lib/redis.ts` の `redisClient` を使用して、Redisからセッション情報、ユーザー情報、ログデータを取得する。
+- **データ取得:** `lib/redis.ts` の `redisClient` (Upstash Redis SDK) を使用して、Redisからセッション情報、ユーザー情報、ログデータを取得する。
 - **表示ロジック:**
     -   セッションCookie (`session_id`) の有無でログイン状態を判定する。
     -   ログイン状態に応じて、`LoginForm` またはログ表示エリアを表示する。

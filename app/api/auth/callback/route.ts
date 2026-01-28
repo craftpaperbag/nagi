@@ -13,14 +13,14 @@ export async function GET(request: Request) {
 
   try {
     // 1. KVからトークン検証＆削除
-    const email = await redisClient.get(`auth_token:${token}`);
+    const email = await redisClient.get<string>(`auth_token:${token}`);
     if (!email) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
     }
     await redisClient.del(`auth_token:${token}`);
 
     // 2. ユーザー特定（存在しなければ新規作成）
-    let userId = await redisClient.get(`user:email:${email}`);
+    let userId = await redisClient.get<string>(`user:email:${email}`);
     let userData: any;
 
     if (!userId) {
@@ -34,17 +34,16 @@ export async function GET(request: Request) {
       };
 
       await redisClient.set(`user:email:${email}`, userId);
-      await redisClient.set(`user:${userId}`, JSON.stringify(userData));
+      await redisClient.set(`user:${userId}`, userData);
       // トークンからユーザーIDを引けるようにする
       await redisClient.set(`api_token:${apiToken}`, userId);
     } else {
-      const existingData = await redisClient.get(`user:${userId}`);
-      userData = existingData ? JSON.parse(existingData) : {};
+      userData = await redisClient.get(`user:${userId}`) || {};
 
       // 既存ユーザーにトークンがない場合の補填
       if (!userData.api_token) {
         userData.api_token = uuidv4();
-        await redisClient.set(`user:${userId}`, JSON.stringify(userData));
+        await redisClient.set(`user:${userId}`, userData);
         await redisClient.set(`api_token:${userData.api_token}`, userId);
       }
     }
@@ -52,7 +51,7 @@ export async function GET(request: Request) {
     // 3. セッションID (UUID) 生成＆KV保存
     const sessionId = await generateSessionId(); // 新規セッションID生成ヘルパー
     await redisClient.set(`session:${sessionId}`, userId, {
-      EX: 30 * 24 * 60 * 60, // TTL: 30日
+      ex: 30 * 24 * 60 * 60, // TTL: 30日
     });
 
     // 4. Cookie設定

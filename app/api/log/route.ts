@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const token = authHeader.split(' ')[1];
-  const userId = await redisClient.get(`api_token:${token}`);
+  const userId = await redisClient.get<string>(`api_token:${token}`);
 
   if (!userId) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
@@ -43,12 +43,12 @@ export async function POST(request: Request) {
     const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
 
     // logs:{userId} に集約して保存
-    await redisClient.rPush(logKey, JSON.stringify(logData));
+    await redisClient.rpush(logKey, logData);
     // 有効期限を1年に設定 (または更新)
     await redisClient.expire(logKey, ONE_YEAR_IN_SECONDS);
 
     // apps:{user_id} セットにアプリ名を追加 (SADD)
-    await redisClient.sAdd(`apps:${userId}`, logData.app);
+    await redisClient.sadd(`apps:${userId}`, logData.app);
 
     // --- Response ---
     return NextResponse.json({ message: 'Log entry added successfully' }, { status: 200 });
