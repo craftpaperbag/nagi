@@ -39,8 +39,14 @@ export async function POST(request: Request) {
 
   // --- Database Operations ---
   try {
+    const logKey = `logs:${userId}`;
+    const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
+
     // logs:{userId} に集約して保存
-    await redisClient.rPush(`logs:${userId}`, JSON.stringify(logData));
+    await redisClient.rPush(logKey, JSON.stringify(logData));
+    // 有効期限を1年に設定 (または更新)
+    await redisClient.expire(logKey, ONE_YEAR_IN_SECONDS);
+
     // apps:{user_id} セットにアプリ名を追加 (SADD)
     await redisClient.sAdd(`apps:${userId}`, logData.app);
 

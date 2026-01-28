@@ -62,7 +62,7 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
     * Key: `logs:{user_id}` (開発中: 全件取得のため日付を省略)
     * Type: List (RPUSH)
     * Value (JSON): `{"ts": 1701501200000, "app": "Instagram"}` (tsはミリ秒)
-    * TTL: 必要に応じて設定（例: 1年）
+    * TTL: 1年 (31,536,000秒)
 
 ### C. アプリ一覧 (Suggestion)
 ユーザーが過去に使用したアプリ名のユニークリスト。
