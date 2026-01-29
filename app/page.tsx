@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
-import Image from 'next/image';
 import { redisClient } from '@/lib/redis';
 import LoginForm from '@/components/LoginForm';
+import QRCode from 'qrcode';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -17,7 +17,7 @@ interface User {
   created_at: string;
 }
 
-// 全ログを取得する関数に変更
+// 全ログを取得する関数
 async function getAllLogs(userId: string): Promise<LogEntry[]> {
   const logs = await redisClient.lrange<LogEntry>(`logs:${userId}`, 0, -1);
   // 新しい順に表示するため、取得後にreverseする
@@ -40,6 +40,11 @@ export default async function Home() {
       }
     }
   }
+
+  // QRコードの生成 (サーバーサイド)
+  const shortcutUrl = process.env.SHORTCUT_URL || '';
+  const shortcutQr = shortcutUrl ? await QRCode.toDataURL(shortcutUrl) : '';
+  const apiTokenQr = user ? await QRCode.toDataURL(user.api_token) : '';
 
   return (
     <main className="min-h-screen p-8">
@@ -71,36 +76,45 @@ export default async function Home() {
               </h2>
               
               <div className="grid md:grid-cols-2 gap-8">
-                <div className="flex flex-col justify-between">
+                {/* Step 1: ショートカット入手 */}
+                <div className="flex flex-col gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-700 mb-2">1. ショートカットを入手</h3>
                     <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                      iPhoneの「ショートカット」アプリに、凪（nagi）専用のログ送信アクションを追加します。
+                      iPhoneでボタンを押すか、PCの場合は右のQRコードをスキャンして追加してください。
                     </p>
                   </div>
-                  <a 
-                    href="https://www.icloud.com/shortcuts/YOUR_SHORTCUT_ID" // TODO: 実際のショートカット共有URLに置き換え
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit"
-                  >
-                    ショートカットをダウンロード
-                  </a>
+                  <div className="flex items-end gap-4">
+                    <a 
+                      href={shortcutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit"
+                    >
+                      入手する
+                    </a>
+                    {shortcutQr && (
+                      <div className="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                        <img src={shortcutQr} alt="Shortcut QR" className="w-20 h-20" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
+                {/* Step 2: APIキー連携 */}
                 <div>
                   <h3 className="text-sm font-bold text-slate-700 mb-2">2. APIキーを連携</h3>
                   <p className="text-xs text-slate-500 mb-4 leading-relaxed">
                     ショートカットの設定画面で、このQRコードをスキャンしてAPIキーを自動入力してください。
                   </p>
                   <div className="bg-white p-3 rounded-xl shadow-sm inline-block border border-slate-200">
-                    <Image 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${user.api_token}`} 
-                      alt="API Token QR Code"
-                      width={150}
-                      height={150}
-                      className="rounded-sm"
-                    />
+                    {apiTokenQr && (
+                      <img 
+                        src={apiTokenQr} 
+                        alt="API Token QR Code"
+                        className="w-[140px] h-[140px]"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -113,7 +127,7 @@ export default async function Home() {
                   {logs.map((log, i) => (
                     <li key={i} className="p-3 bg-gray-50 rounded">
                       <span className="font-mono text-sm mr-4 text-gray-400">
-                        {new Date(log.ts).toLocaleString()} {/* ミリ秒なのでそのまま渡す */}
+                        {new Date(log.ts).toLocaleString()}
                       </span>
                       <span className="font-medium">{log.app}</span>
                     </li>
