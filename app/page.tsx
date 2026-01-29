@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import Image from 'next/image';
 import { redisClient } from '@/lib/redis';
 import LoginForm from '@/components/LoginForm';
 
@@ -62,6 +63,48 @@ export default async function Home() {
                 <code className="text-blue-600">{user.api_token}</code>
               </div>
             </header>
+
+            {/* iOSショートカット設定セクション */}
+            <section className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
+                <span>📱</span> iOSショートカットの設定
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-700 mb-2">1. ショートカットを入手</h3>
+                    <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                      iPhoneの「ショートカット」アプリに、凪（nagi）専用のログ送信アクションを追加します。
+                    </p>
+                  </div>
+                  <a 
+                    href="https://www.icloud.com/shortcuts/YOUR_SHORTCUT_ID" // TODO: 実際のショートカット共有URLに置き換え
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit"
+                  >
+                    ショートカットをダウンロード
+                  </a>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-slate-700 mb-2">2. APIキーを連携</h3>
+                  <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+                    ショートカットの設定画面で、このQRコードをスキャンしてAPIキーを自動入力してください。
+                  </p>
+                  <div className="bg-white p-3 rounded-xl shadow-sm inline-block border border-slate-200">
+                    <Image 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${user.api_token}`} 
+                      alt="API Token QR Code"
+                      width={150}
+                      height={150}
+                      className="rounded-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
             
             <section>
               <h2 className="text-xl font-bold mb-4">すべてのログ (開発用表示)</h2>
