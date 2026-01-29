@@ -47,11 +47,18 @@ export async function POST(request: Request) {
     const origin = new URL(request.url).origin;
     const magicLink = `${origin}/api/auth/callback?token=${token}`;
 
+    // 現在時刻を取得 (重複回避が目的なので、秒まで含める)
+    const timeString = new Date().toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
     // 4. Resendでメール送信
     await resend.emails.send({
       from: 'nagi <onboarding@resend.dev>', // 運用に合わせて変更
       to: [email],
-      subject: 'nagi へのログイン',
+      subject: `nagi へのログイン (${timeString})`,
       html: `
         <p>nagi へのログインリクエストを受け付けました。</p>
         <p><a href="${magicLink}">こちらのリンク</a>をクリックしてログインを完了してください。</p>
