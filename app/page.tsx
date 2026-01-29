@@ -8,6 +8,14 @@ interface LogEntry {
   app: string;
 }
 
+// Userインターフェースの定義
+interface User {
+  id: string;
+  email: string;
+  api_token: string;
+  created_at: string;
+}
+
 // 全ログを取得する関数に変更
 async function getAllLogs(userId: string): Promise<LogEntry[]> {
   const logs = await redisClient.lrange<LogEntry>(`logs:${userId}`, 0, -1);
@@ -19,13 +27,13 @@ export default async function Home() {
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
 
-  let user = null;
+  let user: User | null = null;
   let logs: LogEntry[] = [];
 
   if (sessionId) {
     const userId = await redisClient.get<string>(`session:${sessionId}`);
     if (userId) {
-      user = await redisClient.get(`user:${userId}`);
+      user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
         logs = await getAllLogs(userId); // 全ログ取得
       }
