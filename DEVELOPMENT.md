@@ -14,6 +14,7 @@ RESEND_API_KEY ※手動設定
 
 ```bash
 curl -X POST http://localhost:3000/api/log \
-     -H "Content-Type: application/json" \
-     -d '{"app": "app-name"}'
+    -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+    -H "Content-Type: application/json" \
+    -d '{"app": "Instagram"}'
 ```
