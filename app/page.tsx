@@ -71,50 +71,56 @@ export default async function Home() {
 
             {/* iOSショートカット設定セクション */}
             <section className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-              <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-slate-800">
+              <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800 border-b border-slate-200 pb-2">
                 <span>📱</span> iOSショートカットの設定
               </h2>
               
-              <div className="grid md:grid-cols-2 gap-8">
+              <div className="grid md:grid-cols-2 gap-12">
                 {/* Step 1: ショートカット入手 */}
-                <div className="flex flex-col gap-4">
-                  <div>
+                <div className="flex flex-col">
+                  <div className="mb-4">
                     <h3 className="text-sm font-bold text-slate-700 mb-2">1. ショートカットを入手</h3>
-                    <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                      iPhoneでボタンを押すか、PCの場合は右のQRコードをスキャンして追加してください。
+                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                      iPhoneで下のボタンを押すか、PCの場合はQRコードをスキャンして追加してください。
                     </p>
-                  </div>
-                  <div className="flex items-end gap-4">
                     <a 
                       href={shortcutUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-5 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit"
+                      className="inline-flex items-center justify-center px-5 py-2 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit mb-4"
                     >
                       入手する
                     </a>
-                    {shortcutQr && (
-                      <div className="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
-                        <img src={shortcutQr} alt="Shortcut QR" className="w-20 h-20" />
-                      </div>
-                    )}
+                  </div>
+                  
+                  <div className="flex flex-col items-center w-fit gap-2">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                      {shortcutQr && (
+                        <img src={shortcutQr} alt="Shortcut URL QR" className="w-32 h-32" />
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ショートカットURL</span>
                   </div>
                 </div>
 
                 {/* Step 2: APIキー連携 */}
-                <div>
-                  <h3 className="text-sm font-bold text-slate-700 mb-2">2. APIキーを連携</h3>
-                  <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                    ショートカットの設定画面で、このQRコードをスキャンしてAPIキーを自動入力してください。
-                  </p>
-                  <div className="bg-white p-3 rounded-xl shadow-sm inline-block border border-slate-200">
-                    {apiTokenQr && (
-                      <img 
-                        src={apiTokenQr} 
-                        alt="API Token QR Code"
-                        className="w-[140px] h-[140px]"
-                      />
-                    )}
+                <div className="flex flex-col">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-bold text-slate-700 mb-2">2. APIキーを連携</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                      ショートカットの初回設定（インポート質問）で、下のQRコードをスキャンして入力を完了させてください。
+                    </p>
+                    {/* ボタンがないため、高さを合わせるためのスペーサー */}
+                    <div className="h-[32px] mb-4 hidden md:block"></div>
+                  </div>
+
+                  <div className="flex flex-col items-center w-fit gap-2">
+                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                      {apiTokenQr && (
+                        <img src={apiTokenQr} alt="API Token QR" className="w-32 h-32" />
+                      )}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">APIキー</span>
                   </div>
                 </div>
               </div>
