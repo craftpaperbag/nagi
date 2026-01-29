@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'rate-limited'>('idle');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +19,8 @@ export default function LoginForm() {
 
       if (res.ok) {
         setStatus('success');
+      } else if (res.status === 429) {
+        setStatus('rate-limited');
       } else {
         setStatus('error');
       }
@@ -57,6 +59,11 @@ export default function LoginForm() {
       {status === 'error' && (
         <p className="text-xs text-red-300 text-center font-light">
           なんかうまくいかなかったみたい。もう一回試してみてね。
+        </p>
+      )}
+      {status === 'rate-limited' && (
+        <p className="text-xs text-red-300 text-center font-light">
+          リクエストが多すぎるみたい。1時間後くらいにまた試してみてね。
         </p>
       )}
     </form>

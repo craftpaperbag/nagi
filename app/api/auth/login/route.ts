@@ -1,12 +1,33 @@
 import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { Resend } from 'resend';
-import { redisClient } from '@/lib/redis'; // 名前付きインポートに変更
+import { redisClient } from '@/lib/redis';
+import { Ratelimit } from "@upstash/ratelimit";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Ratelimitのインスタンス化 (redisClientを再利用)
+const ratelimit = new Ratelimit({
+  redis: redisClient,
+  limiter: Ratelimit.slidingWindow(5, "1 h"),
+  analytics: true,
+});
+
 export async function POST(request: Request) {
   try {
+    // 0. Rate Limit (開発環境以外で適用)
+    if (process.env.NODE_ENV !== 'development') {
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1';
+      const { success } = await ratelimit.limit(ip);
+      
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again after an hour.' },
+          { status: 429 }
+        );
+      }
+    }
+
     const { email } = await request.json();
 
     if (!email) {
@@ -19,7 +40,7 @@ export async function POST(request: Request) {
 
     // 2. Redisに保存 (TTL: 600秒)
     await redisClient.set(tokenKey, email, {
-      EX: 600,
+      ex: 600,
     });
 
     // 3. マジックリンクの構築
