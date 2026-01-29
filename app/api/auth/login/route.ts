@@ -60,9 +60,20 @@ export async function POST(request: Request) {
       to: [email],
       subject: `nagi へのログイン (${timeString})`,
       html: `
-        <p>nagi へのログインリクエストを受け付けました。</p>
-        <p><a href="${magicLink}">こちらのリンク</a>をクリックしてログインを完了してください。</p>
-        <p>このリンクの有効期限は10分間です。</p>
+        <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 40px 20px; text-align: center; color: #333;">
+          <h2 style="font-weight: 200; letter-spacing: 0.2em; margin-bottom: 30px;">nagi</h2>
+          <p style="font-size: 14px; color: #666; margin-bottom: 40px; line-height: 1.6;">
+            ログインリクエストを受け付けました。<br>
+            下のボタンをタップして、静かな時間へ戻りましょう。
+          </p>
+          <a href="${magicLink}" style="display: inline-block; background-color: #111; color: #fff; padding: 16px 32px; text-decoration: none; border-radius: 4px; font-size: 14px; letter-spacing: 0.1em; font-weight: 500;">
+            ログインを完了する
+          </a>
+          <p style="font-size: 12px; color: #999; margin-top: 40px;">
+            このリンクの有効期限は10分間です。<br>
+            心当たりのない場合は、このメールを無視してください。
+          </p>
+        </div>
       `,
     });
 
