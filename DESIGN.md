@@ -2,7 +2,7 @@
 
 ## 1. プロダクト概要
 **コンセプト:** あなたを自由にする、静かなデジタル・ウェルビーイングアプリ。
-**目的:** 妻（およびユーザー）のスマホ依存を解消し、人生の時間を取り戻す。
+**目的:** ユーザーのスマホ依存を解消し、人生の時間を取り戻す。
 **コアバリュー:**
 * **No Gamification:** 目標、実績、バッジ、通知は一切なし。
 * **No Friction:** 認知負荷を最小限に。心理的リアクタンス（強制への反発）を生まない。
@@ -51,7 +51,7 @@ RDBではなくKVSを採用し、時系列データ（Stream）として管理�
     * Key: `session:{session_id}`
     * Value: `{user_id}`
     * TTL: 30日
-* **API Token (New)**
+* **API Token**
     * Key: `api_token:{api_token}`
     * Value: `{user_id}`
 
@@ -100,7 +100,7 @@ iOSショートカットから叩かれるエンドポイント。
     4.  **Cookie設定:** `HttpOnly`, `Secure`, `SameSite=Lax`。
     5.  ダッシュボードへリダイレクト。
 
-### POST `/api/auth/logout` (追加)
+### POST `/api/auth/logout`
 * **Logic:**
     1. Cookieの `session_id` を削除。
     2. トップページへリダイレクト。
