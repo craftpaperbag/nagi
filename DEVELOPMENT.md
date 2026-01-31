@@ -18,3 +18,11 @@ curl -X POST http://localhost:3000/api/log \
     -H "Content-Type: application/json" \
     -d '{"app": "Instagram"}'
 ```
+
+## データベース
+
+```bash
+export $(grep -v '^#' .env.local | xargs) && \
+curl "$KV_REST_API_URL/get/test" \
+  -H "Authorization: Bearer $KV_REST_API_READ_ONLY_TOKEN"
+```

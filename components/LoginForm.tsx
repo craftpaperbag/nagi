@@ -32,7 +32,7 @@ export default function LoginForm() {
   if (status === 'success') {
     return (
       <div className="text-center p-8 animate-in fade-in duration-700">
-        <p className="text-gray-500 font-light">メール送ったよ！届いたリンクから、そっとログインしてね。</p>
+        <p className="text-gray-500 font-light">メール送ったよ。リンクから、そっと入ってね。</p>
       </div>
     );
   }
@@ -42,7 +42,7 @@ export default function LoginForm() {
       <div className="flex flex-col gap-2">
         <input
           type="email"
-          placeholder="email address"
+          placeholder="your email?"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -52,18 +52,18 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={status === 'loading'}
-        className="text-xs tracking-[0.2em] text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-30 uppercase"
+        className="text-xs tracking-[0.2em] text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-30 lowercase"
       >
-        {status === 'loading' ? 'Sending...' : 'Get Magic Link'}
+        {status === 'loading' ? 'sending...' : 'send link'}
       </button>
       {status === 'error' && (
         <p className="text-xs text-red-300 text-center font-light">
-          なんかうまくいかなかったみたい。もう一回試してみてね。
+          あれ、うまくいかなかった。もう一回やってみて。
         </p>
       )}
       {status === 'rate-limited' && (
         <p className="text-xs text-red-300 text-center font-light">
-          リクエストが多すぎるみたい。1時間後くらいにまた試してみてね。
+          ちょっと送りすぎかも。また後でね。
         </p>
       )}
     </form>
