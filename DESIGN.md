@@ -32,7 +32,9 @@
 * **Email:** Resend
 * **Hosting:** Vercel
 * **Client:** iOS Shortcuts (Web Hook)
-    * **Shortcut Distribution:** 配布URLは環境変数 (`SHORTCUT_URL`) で管理。配布時、APIキーを `input` パラメータとして付与することで、インポート時の自動設定を可能にする。
+    * **Shortcut Distribution:** 
+        * 配布用URL: 環境変数 (`SHORTCUT_URL`) で管理。
+        * 実行/設定用URL: 環境変数 (`RUN_SHORTCUT_URL`) で管理。実行時にAPIキーを `input` パラメータとして付与し、ショートカット内での初期設定を完了させる。
 
 ## 4. データ構造 (Redis Schema)
 RDBではなくKVSを採用し、時系列データ（Stream）として管理する。
@@ -133,8 +135,8 @@ iOSショートカットから叩かれるエンドポイント。
     -   **ログイン後:**
         -   ヘッダーに「やあ、{email}」という挨拶と「ログアウト」ボタンを表示する。
         -   **iOSショートカット設定セクション:**
-            -   環境変数 `SHORTCUT_URL` に、ユーザーのAPIキーを `input` パラメータとして付加したURLを生成する。
-            -   生成したURLをQRコードおよびボタンとして表示し、ユーザーがスキャンまたはタップすることで、APIキーが設定された状態でショートカットを取り込めるようにする。
+            -   **ステップ1 (インストール):** 環境変数 `SHORTCUT_URL` をそのままQRコード/ボタンとして表示。
+            -   **ステップ2 (初期設定):** 環境変数 `RUN_SHORTCUT_URL` に、ユーザーのAPIキーを `input` パラメータとして付加したURLを生成し、QRコード/ボタンとして表示。
         -   すべてのログを取得し、タイムスタンプとアプリケーション名を表示する。
         -   ログがない場合は、「ログはありません」というメッセージを表示する。
 - **データ取得:** `lib/redis.ts` の `redisClient` (Upstash Redis SDK) を使用して、Redisからセッション情報、ユーザー情報、ログデータを取得する。
