@@ -42,9 +42,12 @@ export default async function Home() {
   }
 
   // QRコードの生成 (サーバーサイド)
-  const shortcutUrl = process.env.SHORTCUT_URL || '';
-  const shortcutQr = shortcutUrl ? await QRCode.toDataURL(shortcutUrl) : '';
-  const apiTokenQr = user ? await QRCode.toDataURL(user.api_token) : '';
+  const shortcutBaseUrl = process.env.SHORTCUT_URL || '';
+  const combinedShortcutUrl = (shortcutBaseUrl && user) 
+    ? `${shortcutBaseUrl}${shortcutBaseUrl.includes('?') ? '&' : '?'}input=${user.api_token}`
+    : shortcutBaseUrl;
+
+  const shortcutQr = combinedShortcutUrl ? await QRCode.toDataURL(combinedShortcutUrl) : '';
 
   return (
     <main className="min-h-screen p-8">
@@ -55,9 +58,9 @@ export default async function Home() {
           <div className="flex flex-col gap-8">
             <header className="flex flex-col gap-4 border-b pb-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500">{user.email} としてログイン中</p>
+                <p className="text-sm text-gray-500 font-light">やあ、{user.email}</p>
                 <form action="/api/auth/logout" method="POST">
-                  <button type="submit" className="text-sm text-red-500 hover:underline">
+                  <button type="submit" className="text-sm text-red-400 hover:underline">
                     ログアウト
                   </button>
                 </form>
@@ -75,53 +78,28 @@ export default async function Home() {
                 <span>📱</span> iOSショートカットの設定
               </h2>
               
-              <div className="grid md:grid-cols-2 gap-12">
-                {/* Step 1: ショートカット入手 */}
-                <div className="flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="text-sm font-bold text-slate-700 mb-2">1. ショートカットを入手</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                      iPhoneで下のボタンを押すか、PCの場合はQRコードをスキャンして追加してください。
-                    </p>
-                    <a 
-                      href={shortcutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-5 py-2 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-fit mb-4"
-                    >
-                      入手する
-                    </a>
-                  </div>
-                  
-                  <div className="flex flex-col items-center w-fit gap-2">
-                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                      {shortcutQr && (
-                        <img src={shortcutQr} alt="Shortcut URL QR" className="w-32 h-32" />
-                      )}
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ショートカットURL</span>
-                  </div>
+              <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold text-slate-700 mb-2">ショートカットをインストール</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed mb-4">
+                    iPhoneで下のボタンを押すか、QRコードをスキャンしてください。<br />
+                    <strong>APIキーが自動的に設定された状態で</strong>ショートカットを追加できます。
+                  </p>
+                  <a 
+                    href={combinedShortcutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-6 py-2 bg-slate-900 text-white text-sm font-medium rounded-full hover:bg-slate-800 transition-all w-fit mb-4"
+                  >
+                    ショートカットを入手
+                  </a>
                 </div>
-
-                {/* Step 2: APIキー連携 */}
-                <div className="flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="text-sm font-bold text-slate-700 mb-2">2. APIキーを連携</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                      ショートカットの初回設定（インポート質問）で、下のQRコードをスキャンして入力を完了させてください。
-                    </p>
-                    {/* ボタンがないため、高さを合わせるためのスペーサー */}
-                    <div className="h-[32px] mb-4 hidden md:block"></div>
-                  </div>
-
-                  <div className="flex flex-col items-center w-fit gap-2">
-                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                      {apiTokenQr && (
-                        <img src={apiTokenQr} alt="API Token QR" className="w-32 h-32" />
-                      )}
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">APIキー</span>
-                  </div>
+                
+                <div className="flex flex-col items-center gap-2 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                  {shortcutQr && (
+                    <img src={shortcutQr} alt="Shortcut Setup QR" className="w-40 h-40" />
+                  )}
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scan to Setup</span>
                 </div>
               </div>
             </section>
