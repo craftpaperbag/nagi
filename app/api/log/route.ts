@@ -31,18 +31,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'App name is required and must be a non-empty string' }, { status: 400 });
   }
 
-  // 3. ログの保存 (開発用に日付を外して全件取得しやすくする)
+  // 3. ログの保存
+  const now = new Date();
   const logData = {
-    ts: Date.now(), // ミリ秒
+    ts: now.getTime(), // ミリ秒
     app: app.trim(), // 前後の空白を除去
   };
 
+  // 日本時間での日付文字列 (YYYY-MM-DD) を生成
+  const dateStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+
   // --- Database Operations ---
   try {
-    const logKey = `logs:${userId}`;
+    const logKey = `logs:${userId}:${dateStr}`;
     const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
 
-    // logs:{userId} に集約して保存
+    // logs:{userId}:{dateStr} に保存
     await redisClient.rpush(logKey, logData);
     // 有効期限を1年に設定 (または更新)
     await redisClient.expire(logKey, ONE_YEAR_IN_SECONDS);

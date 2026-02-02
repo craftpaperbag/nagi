@@ -17,16 +17,21 @@ interface User {
   created_at: string;
 }
 
-// 全ログを取得する関数
-async function getAllLogs(userId: string): Promise<LogEntry[]> {
-  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}`, 0, -1);
+// 特定の日付のログを取得する関数
+async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[]> {
+  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}:${dateStr}`, 0, -1);
   // 新しい順に表示するため、取得後にreverseする
   return [...logs].reverse();
 }
 
-export default async function Home() {
+export default async function Home(props: { searchParams: Promise<{ date?: string }> }) {
+  const searchParams = await props.searchParams;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
+
+  // 日本時間の今日の日付 (YYYY-MM-DD)
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const selectedDate = searchParams.date || today;
 
   let user: User | null = null;
   let logs: LogEntry[] = [];
@@ -36,7 +41,7 @@ export default async function Home() {
     if (userId) {
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
-        logs = await getAllLogs(userId); // 全ログ取得
+        logs = await getLogsByDate(userId, selectedDate); // 指定日のログを取得
       }
     }
   }
@@ -130,20 +135,36 @@ export default async function Home() {
             </section>
             
             <section>
-              <h2 className="text-xl font-bold mb-4">すべてのログ (開発用表示)</h2>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-xl font-bold">タイムライン</h2>
+                <form className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                  <input 
+                    type="date" 
+                    name="date" 
+                    defaultValue={selectedDate}
+                    className="text-sm px-2 py-1 outline-none"
+                  />
+                  <button type="submit" className="text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-md hover:bg-slate-200 transition-colors">
+                    表示
+                  </button>
+                </form>
+              </div>
+
               {logs.length > 0 ? (
                 <ul className="flex flex-col gap-2">
                   {logs.map((log, i) => (
-                    <li key={i} className="p-3 bg-gray-50 rounded">
+                    <li key={i} className="p-3 bg-gray-50 rounded border border-gray-100">
                       <span className="font-mono text-sm mr-4 text-gray-400">
-                        {new Date(log.ts).toLocaleString()}
+                        {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
                       <span className="font-medium">{log.app}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500">ログはありません</p>
+                <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                  <p className="text-slate-400 text-sm">{selectedDate} のログはありません</p>
+                </div>
               )}
             </section>
           </div>
