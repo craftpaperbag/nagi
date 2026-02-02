@@ -2,11 +2,14 @@ import { cookies } from 'next/headers';
 import { redisClient } from '@/lib/redis';
 import LoginForm from '@/components/LoginForm';
 import QRCode from 'qrcode';
+import DatePicker from '@/components/DatePicker';
+import { revalidatePath } from 'next/cache';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
   ts: number; // ミリ秒
   app: string;
+  is_dummy?: boolean; // 追加
 }
 
 // Userインターフェースの定義
@@ -17,16 +20,50 @@ interface User {
   created_at: string;
 }
 
-// 全ログを取得する関数
-async function getAllLogs(userId: string): Promise<LogEntry[]> {
-  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}`, 0, -1);
+// 特定の日付のログを取得する関数
+async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[]> {
+  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}:${dateStr}`, 0, -1);
+  
+  // 開発環境以外ではダミーデータを除外
+  const filteredLogs = process.env.NODE_ENV === 'development' 
+    ? logs 
+    : logs.filter(log => !log.is_dummy);
+
   // 新しい順に表示するため、取得後にreverseする
-  return [...logs].reverse();
+  return [...filteredLogs].reverse();
 }
 
-export default async function Home() {
+// ダミーデータ登録用サーバーアクション
+async function addDummyLog(formData: FormData) {
+  'use server';
+  const userId = formData.get('userId') as string;
+  const app = (formData.get('app') as string) || ''; // 空の場合は空文字にする
+  const datetime = formData.get('datetime') as string;
+
+  if (!userId || !datetime) return;
+
+  const date = new Date(datetime);
+  const ts = date.getTime();
+  const dateStr = date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+
+  const logKey = `logs:${userId}:${dateStr}`;
+  await redisClient.rpush(logKey, { ts, app, is_dummy: true });
+  
+  revalidatePath('/');
+}
+
+export default async function Home(props: { searchParams: Promise<{ date?: string }> }) {
+  const searchParams = await props.searchParams;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
+
+  // 日本時間の今日の日付 (YYYY-MM-DD)
+  const now = new Date();
+  const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const selectedDate = searchParams.date || today;
+
+  // デバッグフォーム用の初期日時 (YYYY-MM-DDTHH:mm)
+  const currentDateTimeJst = now.toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(' ', 'T').slice(0, 16);
 
   let user: User | null = null;
   let logs: LogEntry[] = [];
@@ -36,7 +73,7 @@ export default async function Home() {
     if (userId) {
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
-        logs = await getAllLogs(userId); // 全ログ取得
+        logs = await getLogsByDate(userId, selectedDate); // 指定日のログを取得
       }
     }
   }
@@ -129,24 +166,77 @@ export default async function Home() {
               </div>
             </section>
             
-            <section>
-              <h2 className="text-xl font-bold mb-4">すべてのログ (開発用表示)</h2>
+            <section className="min-h-[600px]">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-xl font-bold">タイムライン</h2>
+                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                  <DatePicker defaultValue={selectedDate} />
+                </div>
+              </div>
+
               {logs.length > 0 ? (
                 <ul className="flex flex-col gap-2">
                   {logs.map((log, i) => (
-                    <li key={i} className="p-3 bg-gray-50 rounded">
+                    <li key={i} className="p-3 bg-gray-50 rounded border border-gray-100">
                       <span className="font-mono text-sm mr-4 text-gray-400">
-                        {new Date(log.ts).toLocaleString()}
+                        {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
-                      <span className="font-medium">{log.app}</span>
+                      <span className="font-medium">
+                        {log.app || <span className="text-slate-400 italic">Home Screen</span>}
+                      </span>
+                      {log.is_dummy && (
+                        <span className="ml-2 text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Dummy</span>
+                      )}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500">ログはありません</p>
+                <div className="py-24 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                  <p className="text-slate-400 text-sm">{selectedDate} のログはありません</p>
+                </div>
               )}
             </section>
           </div>
+        )}
+
+        {/* 開発環境用デバッグフォーム */}
+        {process.env.NODE_ENV === 'development' && user && (
+          <section className="mt-20 p-6 border-2 border-dashed border-amber-200 rounded-2xl bg-amber-50">
+            <h3 className="text-amber-800 font-bold mb-4 flex items-center gap-2">
+              <span>🛠️</span> Debug: Add Dummy Log
+            </h3>
+            <form action={addDummyLog} className="flex flex-wrap gap-4 items-end">
+              <input type="hidden" name="userId" value={user.id} />
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-amber-600 uppercase">Time</label>
+                <input 
+                  type="datetime-local" 
+                  name="datetime" 
+                  defaultValue={currentDateTimeJst}
+                  required 
+                  className="border border-amber-200 rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-amber-600 uppercase">App Name</label>
+                <input 
+                  type="text" 
+                  name="app" 
+                  placeholder="Instagram (empty for Home)" 
+                  className="border border-amber-200 rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="bg-amber-500 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-amber-600 transition-colors"
+              >
+                Add Log
+              </button>
+            </form>
+            <p className="mt-2 text-[10px] text-amber-500">
+              ※ このフォームは開発環境でのみ表示されます。登録されたデータには is_dummy: true が付与されます。
+            </p>
+          </section>
         )}
       </div>
     </main>

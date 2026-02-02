@@ -26,29 +26,35 @@ export async function POST(request: Request) {
   }
 
   const { app } = requestBody;
-  // 'app' フィールドのバリデーション
-  if (typeof app !== 'string' || app.trim() === '') {
-    return NextResponse.json({ error: 'App name is required and must be a non-empty string' }, { status: 400 });
+  // 'app' フィールドのバリデーション (文字列であることを確認し、空文字は許容)
+  if (typeof app !== 'string') {
+    return NextResponse.json({ error: 'App name must be a string' }, { status: 400 });
   }
 
-  // 3. ログの保存 (開発用に日付を外して全件取得しやすくする)
+  // 3. ログの保存
+  const now = new Date();
   const logData = {
-    ts: Date.now(), // ミリ秒
+    ts: now.getTime(), // ミリ秒
     app: app.trim(), // 前後の空白を除去
   };
 
+  // 日本時間での日付文字列 (YYYY-MM-DD) を生成
+  const dateStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+
   // --- Database Operations ---
   try {
-    const logKey = `logs:${userId}`;
+    const logKey = `logs:${userId}:${dateStr}`;
     const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
 
-    // logs:{userId} に集約して保存
+    // logs:{userId}:{dateStr} に保存
     await redisClient.rpush(logKey, logData);
     // 有効期限を1年に設定 (または更新)
     await redisClient.expire(logKey, ONE_YEAR_IN_SECONDS);
 
-    // apps:{user_id} セットにアプリ名を追加 (SADD)
-    await redisClient.sadd(`apps:${userId}`, logData.app);
+    // apps:{user_id} セットにアプリ名を追加 (SADD) - 空文字以外の場合のみ
+    if (logData.app) {
+      await redisClient.sadd(`apps:${userId}`, logData.app);
+    }
 
     // --- Response ---
     return NextResponse.json({ message: 'Log entry added successfully' }, { status: 200 });
