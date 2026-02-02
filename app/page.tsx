@@ -199,7 +199,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             {!showSettings && (
               <>
                 {/* グローバル日付選択 */}
-                <div className="flex justify-center mb-10">
+                <div className="flex justify-center mb-6">
                   <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
                     <DatePicker defaultValue={selectedDate} />
