@@ -98,7 +98,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
           <div className="flex flex-col gap-8">
             <header className="flex flex-col gap-4 border-b pb-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500 font-light">やあ、{user.email}</p>
+                <p className="text-sm text-gray-500 font-light">Hey, {user.email}</p>
                 <form action="/api/auth/logout" method="POST">
                   <button type="submit" className="text-sm text-red-400 hover:underline">
                     ログアウト
