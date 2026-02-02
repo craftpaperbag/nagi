@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-@keyframes nagi-wave {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateY(0px);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translateY(-2px);
-  }
-}
+@theme {
+  --animate-nagi-wave: nagi-wave 10s ease-in-out infinite;
 
-@layer utilities {
-  .animate-nagi-wave {
-    animation: nagi-wave 10s ease-in-out infinite;
+  @keyframes nagi-wave {
+    0% {
+      opacity: 0.3;
+      transform: translateY(0px);
+    }
+    50% {
+      opacity: 0.5;
+      transform: translateY(-2px);
+    }
+    100% {
+      opacity: 0.3;
+      transform: translateY(0px);
+    }
   }
 }
