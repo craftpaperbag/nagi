@@ -67,14 +67,17 @@ export default function VisualTimeline({
             start: startMin,
             end: effectiveEndMin,
             type,
-            app: isStoneActive ? log.app : undefined
+            // app名はデバッグ用。現在の状態（直前のログまたは前日最終ログ）に合わせて設定
+            app: isStoneActive ? (prevDayLastLog?.app || 'Unknown') : undefined
           });
         }
       }
       
-      // 次の区間の状態を決定: 選択されたアプリのいずれかならStone開始、それ以外ならWave開始
+      // 重要：ここで状態を更新する。この log.app の状態が「この時刻以降」の区間に適用される。
       isStoneActive = targetApps.includes(log.app);
       lastTs = log.ts;
+      // 次のセグメントのために、現在のログを保持
+      prevDayLastLog = log;
     });
 
     // 最後のログから制限時刻まで
@@ -88,7 +91,7 @@ export default function VisualTimeline({
           start: startMin,
           end: limitMin,
           type,
-          app: isStoneActive ? undefined : undefined // 最後の状態を保持
+          app: isStoneActive ? (prevDayLastLog?.app || 'Unknown') : undefined
         });
       }
     }
