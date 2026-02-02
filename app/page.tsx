@@ -39,10 +39,18 @@ async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[
 // ダミーデータ登録用サーバーアクション
 async function addDummyLog(formData: FormData) {
   'use server';
-  const userId = formData.get('userId') as string;
+  // 開発環境以外では実行させない
+  if (process.env.NODE_ENV !== 'development') return;
+
+  // セッションからユーザーIDを取得
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+
   const app = (formData.get('app') as string) || ''; // 空の場合は空文字にする
   const datetime = formData.get('datetime') as string;
 
+  // userId が取得できない、または datetime がない場合は中断
   if (!userId || !datetime) return;
 
   const date = new Date(datetime);
@@ -60,10 +68,15 @@ async function deleteLog(formData: FormData) {
   'use server';
   if (process.env.NODE_ENV !== 'development') return;
 
-  const userId = formData.get('userId') as string;
+  // セッションからユーザーIDを取得
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+
   const dateStr = formData.get('dateStr') as string;
   const logJson = formData.get('logJson') as string;
 
+  // userId が取得できない、または必要なデータがない場合は中断
   if (!userId || !dateStr || !logJson) return;
 
   const logKey = `logs:${userId}:${dateStr}`;
@@ -244,7 +257,6 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         </div>
                         {process.env.NODE_ENV === 'development' && user && (
                           <form action={deleteLog}>
-                            <input type="hidden" name="userId" value={user.id} />
                             <input type="hidden" name="dateStr" value={selectedDate} />
                             <input type="hidden" name="logJson" value={JSON.stringify(log)} />
                             <button type="submit" className="text-[10px] text-red-400 hover:text-red-600 font-bold border border-red-100 px-2 py-0.5 rounded bg-white transition-colors">
@@ -272,7 +284,6 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
               <span>🛠️</span> Debug: Add Dummy Log
             </h3>
             <form action={addDummyLog} className="flex flex-wrap gap-4 items-end">
-              <input type="hidden" name="userId" value={user.id} />
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-bold text-amber-600 uppercase">Time</label>
                 <input 
