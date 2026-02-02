@@ -24,16 +24,12 @@ export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs
       const startMin = (lastTs - startOfDay) / (1000 * 60);
       const endMin = (log.ts - startOfDay) / (1000 * 60);
 
-      if (isStoneActive && targetApp) {
-        // Stone Mode: 15分以上の空きがあればWaveに切り替える
-        const stoneDuration = Math.min(durationMin, 15);
-        segments.push({ start: startMin, end: startMin + stoneDuration, type: 'stone', app: targetApp });
-        if (durationMin > 15) {
-          segments.push({ start: startMin + stoneDuration, end: endMin, type: 'wave' });
-        }
-      } else {
-        segments.push({ start: startMin, end: endMin, type: 'wave' });
-      }
+      segments.push({
+        start: startMin,
+        end: endMin,
+        type: isStoneActive ? 'stone' : 'wave',
+        app: isStoneActive ? targetApp : undefined
+      });
     }
     
     // 次の区間の状態を決定: 選択されたアプリならStone開始、それ以外ならWave開始
@@ -45,15 +41,12 @@ export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs
   const endOfDay = startOfDay + (totalMinutes * 60 * 1000);
   if (lastTs < endOfDay) {
     const startMin = (lastTs - startOfDay) / (1000 * 60);
-    if (isStoneActive && targetApp) {
-      const stoneDuration = Math.min((endOfDay - lastTs) / (1000 * 60), 15);
-      segments.push({ start: startMin, end: startMin + stoneDuration, type: 'stone', app: targetApp });
-      if (startMin + stoneDuration < totalMinutes) {
-        segments.push({ start: startMin + stoneDuration, end: totalMinutes, type: 'wave' });
-      }
-    } else {
-      segments.push({ start: startMin, end: totalMinutes, type: 'wave' });
-    }
+    segments.push({
+      start: startMin,
+      end: totalMinutes,
+      type: isStoneActive ? 'stone' : 'wave',
+      app: isStoneActive ? targetApp : undefined
+    });
   }
 
   return (
