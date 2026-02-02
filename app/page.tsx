@@ -5,6 +5,8 @@ import QRCode from 'qrcode';
 import DatePicker from '@/components/DatePicker';
 import { revalidatePath } from 'next/cache';
 import VisualTimeline from '@/components/VisualTimeline';
+import Link from 'next/link';
+import ScrollRestorer from '@/components/ScrollRestorer';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -112,6 +114,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
 
   return (
     <main className="min-h-screen p-8">
+      <ScrollRestorer />
       <div className="max-w-2xl mx-auto">
         {!user ? (
           <LoginForm />
@@ -195,9 +198,10 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   <h2 className="text-xl font-bold">タイムライン</h2>
                   <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
                     {uniqueApps.map(app => (
-                      <a
+                      <Link
                         key={app}
                         href={`?date=${selectedDate}&target=${encodeURIComponent(app)}`}
+                        scroll={false}
                         className={`px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
                           targetApp === app 
                             ? 'bg-slate-800 text-white shadow-sm' 
@@ -205,7 +209,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         }`}
                       >
                         {app}
-                      </a>
+                      </Link>
                     ))}
                   </div>
                 </div>
