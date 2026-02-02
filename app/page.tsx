@@ -154,7 +154,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
           <div className="flex flex-col gap-8">
             <header className="flex flex-col gap-4 border-b pb-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500 font-light">こんにちは、{user.email.split('@')[0]}</p>
+                <p className="text-sm text-gray-500 font-light">こんにちは、{user.email}</p>
                 <div className="flex gap-4 items-center">
                   {/* 設定リンクの追加 */}
                   <Link href={showSettings ? "/" : "?settings=true"} className="text-sm text-slate-500 hover:underline">
