@@ -1,11 +1,29 @@
 'use client';
 
+import { useState } from 'react';
+
 interface LogEntry {
   ts: number;
   app: string;
 }
 
 export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge }: { logs: LogEntry[], selectedDate: string, targetApp: string, isLarge?: boolean }) {
+  // 波紋の状態管理
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+
+  const addRipple = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.closest('.timeline-container')?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const id = Date.now();
+    setRipples(prev => [...prev, { id, x, y }]);
+    // 2秒後に削除
+    setTimeout(() => {
+      setRipples(prev => prev.filter(r => r.id !== id));
+    }, 2000);
+  };
+
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
   const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
@@ -78,7 +96,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
 
   return (
     <>
-      <div className={`relative transition-all duration-500 ease-in-out ${
+      <div className={`relative timeline-container transition-all duration-500 ease-in-out ${
         isLarge 
           ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-300/50 shadow-inner' 
           : 'w-full h-20 rounded-xl border border-slate-300/50 shadow-inner'
@@ -117,6 +135,24 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
           style={{ width: `${((totalMinutes - limitMin) / totalMinutes) * 100}%` }}
         />
 
+        {/* 2.5 波紋レイヤー (pointer-events-none でクリックを邪魔しない) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-15">
+          {ripples.map(ripple => (
+            <div
+              key={ripple.id}
+              className="absolute rounded-full bg-sky-300/30 animate-nagi-ripple"
+              style={{
+                left: ripple.x,
+                top: ripple.y,
+                width: '100px',
+                height: '100px',
+                marginLeft: '-50px',
+                marginTop: '-50px',
+              }}
+            />
+          ))}
+        </div>
+
         {/* 3. セグメントレイヤー (石が波を上書きする) */}
         <div className="flex h-full w-full relative z-20">
           {segments.map((seg, i) => {
@@ -140,7 +176,10 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                   </div>
                 ) : (
                   /* 波のセグメント */
-                  <div className="w-full h-full relative">
+                  <div 
+                    className="w-full h-full relative cursor-pointer"
+                    onClick={addRipple}
+                  >
                     {/* ツールチップ (Wave) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] border border-slate-200 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
                       <span className="opacity-70">wave:</span> {formatDuration(totalWaveMin)}
