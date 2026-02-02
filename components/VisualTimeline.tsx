@@ -95,23 +95,23 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
             {/* 波 1: シアン系 (中央付近を流れるリボン状) */}
             <path fill="#06b6d4" opacity="0.5">
               <animate attributeName="d" dur="12s" repeatCount="indefinite"
-                values="M0 40 Q 25 30 50 40 T 100 40 V 65 Q 75 55 50 65 T 0 65 Z;
-                        M0 40 Q 25 45 50 40 T 100 40 V 65 Q 75 75 50 65 T 0 65 Z;
-                        M0 40 Q 25 30 50 40 T 100 40 V 65 Q 75 55 50 65 T 0 65 Z" />
+                values="M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z;
+                        M0 40 Q 25 50 50 40 T 100 40 V 60 Q 75 50 50 60 T 0 60 Z;
+                        M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z" />
             </path>
             {/* 波 2: スカイブルー系 */}
             <path fill="#3b82f6" opacity="0.5">
               <animate attributeName="d" dur="7s" repeatCount="indefinite"
-                values="M0 45 Q 25 55 50 45 T 100 45 V 58 Q 75 48 50 58 T 0 58 Z;
-                        M0 45 Q 25 35 50 45 T 100 45 V 58 Q 75 68 50 58 T 0 58 Z;
-                        M0 45 Q 25 55 50 45 T 100 45 V 58 Q 75 48 50 58 T 0 58 Z" />
+                values="M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z;
+                        M0 45 Q 25 35 50 45 T 100 45 V 55 Q 75 65 50 55 T 0 55 Z;
+                        M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z" />
             </path>
             {/* 波 3: バイオレット系 */}
             <path fill="#8b5cf6" opacity="0.4">
               <animate attributeName="d" dur="19s" repeatCount="indefinite"
-                values="M0 35 Q 25 20 50 35 T 100 35 V 70 Q 75 60 50 70 T 0 70 Z;
-                        M0 35 Q 25 45 50 35 T 100 35 V 70 Q 75 85 50 70 T 0 70 Z;
-                        M0 35 Q 25 20 50 35 T 100 35 V 70 Q 75 60 50 70 T 0 70 Z" />
+                values="M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z;
+                        M0 35 Q 25 50 50 35 T 100 35 V 65 Q 75 50 50 65 T 0 65 Z;
+                        M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z" />
             </path>
           </svg>
         </div>
@@ -181,18 +181,23 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
       </div>
 
       {/* 凡例の追加 */}
-      {targetApp && (
-        <div className={`mt-3 flex flex-wrap gap-x-6 gap-y-2 px-1 text-[11px] text-slate-500 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-            <span>{targetApp} による拘束</span>
+      <div className={`mt-3 flex flex-col gap-2 px-1 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
+        {targetApp && (
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-slate-500">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
+              <span>{targetApp} による拘束</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
+              <span>自由な解放</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
-            <span>自由な解放</span>
-          </div>
-        </div>
-      )}
+        )}
+        <p className="text-[10px] text-slate-400 italic leading-relaxed">
+          ※ iOSオートメーションを設定していないアプリは記録がとれていないため、正しい表示にならない可能性があります。
+        </p>
+      </div>
     </>
   );
 }
