@@ -58,8 +58,12 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   const sessionId = cookieStore.get('session_id')?.value;
 
   // 日本時間の今日の日付 (YYYY-MM-DD)
-  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const now = new Date();
+  const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   const selectedDate = searchParams.date || today;
+
+  // デバッグフォーム用の初期日時 (YYYY-MM-DDTHH:mm)
+  const currentDateTimeJst = now.toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(' ', 'T').slice(0, 16);
 
   let user: User | null = null;
   let logs: LogEntry[] = [];
@@ -208,6 +212,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                 <input 
                   type="datetime-local" 
                   name="datetime" 
+                  defaultValue={currentDateTimeJst}
                   required 
                   className="border border-amber-200 rounded px-2 py-1 text-sm"
                 />
