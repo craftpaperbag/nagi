@@ -87,43 +87,33 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
           <svg 
-            className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} animate-nagi-wave`} 
+            className="absolute top-0 left-0 w-full h-full animate-nagi-wave" // top-0 h-full に変更して隙間を防止
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
-            style={{ filter: 'saturate(1.8) brightness(1.1)' }} // 彩度と輝度を上げる
+            style={{ filter: 'saturate(1.8) brightness(1.1)' }}
           >
-            <defs>
-              {/* 波の形に切り抜くためのマスク定義 (最も高い波に合わせる) */}
-              <clipPath id="wave-mask">
-                <path d="M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z">
-                  <animate attributeName="d" dur="8s" repeatCount="indefinite"
-                    values="M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z;
-                            M0 40 Q 25 50 50 40 T 100 40 V 100 H 0 Z;
-                            M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z" />
-                </path>
-              </clipPath>
-            </defs>
+            {/* defs (clipPath) を削除 */}
 
-            {/* 波 1: シアン系 (リズム: 12s, 振幅大) */}
+            {/* 波 1: シアン系 (ベースYを60に下げ、V 110で下端を突き抜ける) */}
             <path fill="#06b6d4" opacity="0.5">
               <animate attributeName="d" dur="12s" repeatCount="indefinite"
-                values="M0 50 Q 25 20 50 50 T 100 50 V 100 H 0 Z;
-                        M0 50 Q 25 80 50 50 T 100 50 V 100 H 0 Z;
-                        M0 50 Q 25 20 50 50 T 100 50 V 100 H 0 Z" />
+                values="M0 60 Q 25 40 50 60 T 100 60 V 110 H 0 Z;
+                        M0 60 Q 25 80 50 60 T 100 60 V 110 H 0 Z;
+                        M0 60 Q 25 40 50 60 T 100 60 V 110 H 0 Z" />
             </path>
-            {/* 波 2: スカイブルー系 (リズム: 7s, 振幅中) */}
+            {/* 波 2: スカイブルー系 */}
             <path fill="#3b82f6" opacity="0.5">
               <animate attributeName="d" dur="7s" repeatCount="indefinite"
-                values="M0 55 Q 25 70 50 55 T 100 55 V 100 H 0 Z;
-                        M0 55 Q 25 40 50 55 T 100 55 V 100 H 0 Z;
-                        M0 55 Q 25 70 50 55 T 100 55 V 100 H 0 Z" />
+                values="M0 65 Q 25 75 50 65 T 100 65 V 110 H 0 Z;
+                        M0 65 Q 25 55 50 65 T 100 65 V 110 H 0 Z;
+                        M0 65 Q 25 75 50 65 T 100 65 V 110 H 0 Z" />
             </path>
-            {/* 波 3: バイオレット系 (リズム: 19s, 振幅最大) */}
+            {/* 波 3: バイオレット系 */}
             <path fill="#8b5cf6" opacity="0.4">
               <animate attributeName="d" dur="19s" repeatCount="indefinite"
-                values="M0 45 Q 25 10 50 45 T 100 45 V 100 H 0 Z;
-                        M0 45 Q 25 90 50 45 T 100 45 V 100 H 0 Z;
-                        M0 45 Q 25 10 50 45 T 100 45 V 100 H 0 Z" />
+                values="M0 55 Q 25 30 50 55 T 100 55 V 110 H 0 Z;
+                        M0 55 Q 25 80 50 55 T 100 55 V 110 H 0 Z;
+                        M0 55 Q 25 30 50 55 T 100 55 V 110 H 0 Z" />
             </path>
           </svg>
         </div>
@@ -151,7 +141,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                     
                     {/* ツールチップ (Stone) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                      <span className="opacity-70">静止:</span> {formatDuration(totalStoneMin)}
+                      <span className="opacity-70">拘束:</span> {formatDuration(totalStoneMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                     </div>
                   </div>
@@ -162,7 +152,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                   >
                     {/* ツールチップ (Wave) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] border border-slate-200 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                      <span className="opacity-70">流動:</span> {formatDuration(totalWaveMin)}
+                      <span className="opacity-70">解放:</span> {formatDuration(totalWaveMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90" />
                     </div>
                   </div>
@@ -197,11 +187,11 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         <div className={`mt-3 flex flex-wrap gap-x-6 gap-y-2 px-1 text-[11px] text-slate-500 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-            <span>{targetApp} による静止</span>
+            <span>{targetApp} による拘束</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
-            <span>自由な流動</span>
+            <span>自由な解放</span>
           </div>
         </div>
       )}
