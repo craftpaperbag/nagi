@@ -198,6 +198,14 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
 
             {!showSettings && (
               <>
+                {/* グローバル日付選択 */}
+                <div className="flex justify-center mb-10">
+                  <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
+                    <DatePicker defaultValue={selectedDate} />
+                  </div>
+                </div>
+
                 {/* iOSショートカット設定セクション (条件付き表示) */}
                 {!user.setup_completed && (
                   <section className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
@@ -301,11 +309,8 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     )}
                   </div>
 
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                  <div className="mb-6">
                     <h2 className="text-xl font-bold">ログ表示</h2>
-                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                      <DatePicker defaultValue={selectedDate} />
-                    </div>
                   </div>
 
                   {logs.length > 0 ? (
