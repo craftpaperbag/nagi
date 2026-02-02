@@ -5,7 +5,7 @@ interface LogEntry {
   app: string;
 }
 
-export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs: LogEntry[], selectedDate: string, targetApp: string }) {
+export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge }: { logs: LogEntry[], selectedDate: string, targetApp: string, isLarge?: boolean }) {
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
   const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
@@ -67,7 +67,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs
   }
 
   return (
-    <div className="relative w-full h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex">
+    <div className={`relative w-full ${isLarge ? 'h-48' : 'h-20'} bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex transition-all duration-300`}>
       {/* 現在時刻の強調表示 */}
       {isToday && (
         <div 
@@ -92,7 +92,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs
             ) : (
               <div className="w-full h-full bg-gradient-to-b from-sky-50 via-white to-indigo-50 overflow-hidden">
                 {/* 波のパステルエフェクト */}
-                <svg className="absolute bottom-0 w-full h-12 opacity-30 animate-nagi-wave" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-32' : 'h-12'} opacity-30 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
                   <path d="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" fill="#bae6fd">
                     <animate attributeName="d" dur="8s" repeatCount="indefinite"
                       values="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z;

@@ -104,9 +104,10 @@ async function updateSetupStatus(formData: FormData) {
   revalidatePath('/');
 }
 
-export default async function Home(props: { searchParams: Promise<{ date?: string; target?: string; settings?: string }> }) {
-  const { date, target: targetApp = '', settings: settingsParam } = await props.searchParams;
+export default async function Home(props: { searchParams: Promise<{ date?: string; target?: string; settings?: string; large?: string }> }) {
+  const { date, target: targetApp = '', settings: settingsParam, large: largeParam } = await props.searchParams;
   const showSettings = settingsParam === 'true';
+  const isLarge = largeParam === 'true';
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
 
@@ -154,7 +155,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
           <div className="flex flex-col gap-8">
             <header className="flex flex-col gap-4 border-b pb-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500 font-light">こんにちは、{user.email}</p>
+                <p className="text-sm text-gray-500 font-light">こんにちは、{user.email.split('@')[0]}</p>
                 <div className="flex gap-4 items-center">
                   {/* 設定リンクの追加 */}
                   <Link href={showSettings ? "/" : "?settings=true"} className="text-sm text-slate-500 hover:underline">
@@ -267,12 +268,21 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   {/* 新しい視覚的タイムライン */}
                   <div className="mb-12">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                      <h2 className="text-xl font-bold">タイムライン</h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold">タイムライン</h2>
+                        <Link
+                          href={`?date=${selectedDate}&target=${encodeURIComponent(targetApp)}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
+                          scroll={false}
+                          className="text-[10px] px-2 py-0.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
+                        >
+                          {isLarge ? '標準サイズ' : '大きく表示'}
+                        </Link>
+                      </div>
                       <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
                         {uniqueApps.map(app => (
                           <Link
                             key={app}
-                            href={`?date=${selectedDate}&target=${encodeURIComponent(app)}`}
+                            href={`?date=${selectedDate}&target=${encodeURIComponent(app)}${isLarge ? '&large=true' : ''}`}
                             scroll={false}
                             className={`px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
                               targetApp === app 
@@ -285,7 +295,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         ))}
                       </div>
                     </div>
-                    <VisualTimeline logs={logs} selectedDate={selectedDate} targetApp={targetApp} />
+                    <VisualTimeline logs={logs} selectedDate={selectedDate} targetApp={targetApp} isLarge={isLarge} />
                     {!targetApp && uniqueApps.length > 0 && (
                       <p className="text-[10px] text-slate-400 mt-2 text-right italic">アプリを選択すると「石」が表示されます</p>
                     )}
