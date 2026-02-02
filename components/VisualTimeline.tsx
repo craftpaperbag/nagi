@@ -189,7 +189,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                     
                     {/* ツールチップ (Stone) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                      <span className="opacity-70">stone:</span> {formatDuration(totalStoneMin)}
+                      <span className="opacity-70">stilled:</span> {formatDuration(totalStoneMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                     </div>
                   </div>
@@ -201,7 +201,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                   >
                     {/* ツールチップ (Wave) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] border border-slate-200 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                      <span className="opacity-70">wave:</span> {formatDuration(totalWaveMin)}
+                      <span className="opacity-70">flowing:</span> {formatDuration(totalWaveMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90" />
                     </div>
                   </div>
@@ -236,11 +236,11 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         <div className={`mt-3 flex flex-wrap gap-x-6 gap-y-2 px-1 text-[11px] text-slate-500 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-            <span>{targetApp}を使っていた時間</span>
+            <span>stilled by {targetApp}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
-            <span>{targetApp}から自由だった時間</span>
+            <span>flowing freely</span>
           </div>
         </div>
       )}
