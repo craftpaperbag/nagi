@@ -9,7 +9,8 @@ export default function DatePicker({ defaultValue }: { defaultValue: string }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     // クエリパラメータを更新してページを再読み込み
-    router.push(`${pathname}?date=${date}`);
+    // scroll: false を指定して、ページトップへの自動スクロールを防ぐ
+    router.push(`${pathname}?date=${date}`, { scroll: false });
   };
 
   return (
