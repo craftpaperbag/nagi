@@ -66,16 +66,26 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
     }
   }
 
+  // 合計時間の計算 (limitMin まで)
+  const totalStoneMin = segments.reduce((acc, seg) => seg.type === 'stone' ? acc + (seg.end - seg.start) : acc, 0);
+  const totalWaveMin = limitMin - totalStoneMin;
+
+  const formatDuration = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = Math.round(mins % 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
+
   return (
     <>
       <div className={`relative transition-all duration-500 ease-in-out ${
         isLarge 
           ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-300/50 shadow-inner' 
           : 'w-full h-20 rounded-xl border border-slate-300/50 shadow-inner'
-      } bg-slate-100 overflow-hidden`}>
+      } bg-slate-100`}>
         
         {/* 1. 背景の波レイヤー (24時間分) */}
-        <div className="absolute inset-0 bg-white pointer-events-none">
+        <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
           <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
             {/* 波 1: シアン系 (より鮮やかに) */}
             <path fill="#22d3ee" opacity="0.6">
@@ -103,7 +113,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
 
         {/* 2. 未来マスクレイヤー (現在時刻以降を隠す) */}
         <div 
-          className="absolute inset-y-0 right-0 bg-slate-100 z-10"
+          className={`absolute inset-y-0 right-0 bg-slate-100 z-10 ${isLarge ? '' : 'rounded-r-xl'}`}
           style={{ width: `${((totalMinutes - limitMin) / totalMinutes) * 100}%` }}
         />
 
@@ -114,18 +124,29 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
             if (width === '0%') return null;
 
             return (
-              <div key={i} style={{ width }} className="h-full relative">
+              <div key={i} style={{ width }} className="h-full relative group">
                 {seg.type === 'stone' ? (
                   <div 
                     className={`w-full h-full bg-slate-400 border-x border-slate-500/20 transition-colors hover:bg-slate-500 ${isLarge ? 'shadow-[inset_0_4px_12px_rgba(0,0,0,0.2)]' : 'shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]'}`} 
-                    title={seg.app}
                   >
                     {/* 石板のテクスチャ */}
                     <div className={`absolute inset-0 bg-black/10 ${isLarge ? 'opacity-20' : 'opacity-10'}`} />
+                    
+                    {/* ツールチップ (Stone) */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                      <span className="opacity-70">stone:</span> {formatDuration(totalStoneMin)}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                    </div>
                   </div>
                 ) : (
-                  /* 波のセグメントは透明にして背景を見せる */
-                  <div className="w-full h-full" />
+                  /* 波のセグメント */
+                  <div className="w-full h-full relative">
+                    {/* ツールチップ (Wave) */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] border border-slate-200 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                      <span className="opacity-70">wave:</span> {formatDuration(totalWaveMin)}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90" />
+                    </div>
+                  </div>
                 )}
               </div>
             );
