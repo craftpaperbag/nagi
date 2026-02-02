@@ -37,10 +37,10 @@ async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[
 async function addDummyLog(formData: FormData) {
   'use server';
   const userId = formData.get('userId') as string;
-  const app = formData.get('app') as string;
+  const app = (formData.get('app') as string) || ''; // 空の場合は空文字にする
   const datetime = formData.get('datetime') as string;
 
-  if (!userId || !app || !datetime) return;
+  if (!userId || !datetime) return;
 
   const date = new Date(datetime);
   const ts = date.getTime();
@@ -177,7 +177,9 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                       <span className="font-mono text-sm mr-4 text-gray-400">
                         {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
-                      <span className="font-medium">{log.app}</span>
+                      <span className="font-medium">
+                        {log.app || <span className="text-slate-400 italic">Home Screen</span>}
+                      </span>
                       {log.is_dummy && (
                         <span className="ml-2 text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Dummy</span>
                       )}
@@ -215,8 +217,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                 <input 
                   type="text" 
                   name="app" 
-                  placeholder="Instagram" 
-                  required 
+                  placeholder="Instagram (empty for Home)" 
                   className="border border-amber-200 rounded px-2 py-1 text-sm"
                 />
               </div>

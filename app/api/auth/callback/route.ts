@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { redisClient } from '@/lib/redis'; // redisClient を名前付きインポート
-import { generateSessionId, setSessionCookie } from '@/lib/auth'; // セッション生成とCookie設定用のヘルパー関数（後述）
+import { generateSessionId, setSessionCookie } from '@/lib/auth'; // セッション生成とCookie設定用のヘルパー関数
 import { v4 as uuidv4 } from 'uuid'; // uuidをインポート
 
 export async function GET(request: Request) {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     let userData: any;
 
     if (!userId) {
-      userId = `user_${Date.now()}`; // 仮の user_id 生成
+      userId = uuidv4(); // user_id も UUID で生成
       const apiToken = uuidv4(); // API用トークンを生成
       userData = {
         id: userId,
