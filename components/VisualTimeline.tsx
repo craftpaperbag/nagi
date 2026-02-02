@@ -87,33 +87,31 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
           <svg 
-            className="absolute top-0 left-0 w-full h-full pb-8 animate-nagi-wave" // top-0 h-full に変更して隙間を防止
+            className="absolute top-0 left-0 w-full h-full animate-nagi-wave"
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
             style={{ filter: 'saturate(1.8) brightness(1.1)' }}
           >
-            {/* defs (clipPath) を削除 */}
-
-            {/* 波 1: シアン系 (ベースYを60に下げ、V 110で下端を突き抜ける) */}
+            {/* 波 1: シアン系 (中央付近を流れるリボン状) */}
             <path fill="#06b6d4" opacity="0.5">
               <animate attributeName="d" dur="12s" repeatCount="indefinite"
-                values="M0 60 Q 25 40 50 60 T 100 60 V 110 H 0 Z;
-                        M0 60 Q 25 80 50 60 T 100 60 V 110 H 0 Z;
-                        M0 60 Q 25 40 50 60 T 100 60 V 110 H 0 Z" />
+                values="M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z;
+                        M0 40 Q 25 50 50 40 T 100 40 V 60 Q 75 50 50 60 T 0 60 Z;
+                        M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z" />
             </path>
             {/* 波 2: スカイブルー系 */}
             <path fill="#3b82f6" opacity="0.5">
               <animate attributeName="d" dur="7s" repeatCount="indefinite"
-                values="M0 65 Q 25 75 50 65 T 100 65 V 110 H 0 Z;
-                        M0 65 Q 25 55 50 65 T 100 65 V 110 H 0 Z;
-                        M0 65 Q 25 75 50 65 T 100 65 V 110 H 0 Z" />
+                values="M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z;
+                        M0 45 Q 25 35 50 45 T 100 45 V 55 Q 75 65 50 55 T 0 55 Z;
+                        M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z" />
             </path>
             {/* 波 3: バイオレット系 */}
             <path fill="#8b5cf6" opacity="0.4">
               <animate attributeName="d" dur="19s" repeatCount="indefinite"
-                values="M0 55 Q 25 30 50 55 T 100 55 V 110 H 0 Z;
-                        M0 55 Q 25 80 50 55 T 100 55 V 110 H 0 Z;
-                        M0 55 Q 25 30 50 55 T 100 55 V 110 H 0 Z" />
+                values="M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z;
+                        M0 35 Q 25 50 50 35 T 100 35 V 65 Q 75 50 50 65 T 0 65 Z;
+                        M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z" />
             </path>
           </svg>
         </div>
