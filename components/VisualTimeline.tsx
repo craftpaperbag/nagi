@@ -113,7 +113,12 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
-          <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
+          <svg 
+            className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} animate-nagi-wave`} 
+            viewBox="0 0 100 100" 
+            preserveAspectRatio="none"
+            style={{ filter: 'saturate(1.8) brightness(1.1)' }} // 彩度と輝度を上げる
+          >
             <defs>
               {/* 波の形に切り抜くためのマスク定義 (最も高い波に合わせる) */}
               <clipPath id="wave-mask">
@@ -126,26 +131,26 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
               </clipPath>
             </defs>
 
-            {/* 波 1: シアン系 (より鮮やかに) */}
-            <path fill="#22d3ee" opacity="0.6">
-              <animate attributeName="d" dur="10s" repeatCount="indefinite"
-                values="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z;
-                        M0 50 Q 25 60 50 50 T 100 50 V 100 H 0 Z;
-                        M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" />
+            {/* 波 1: シアン系 (リズム: 12s, 振幅大) */}
+            <path fill="#06b6d4" opacity="0.5">
+              <animate attributeName="d" dur="12s" repeatCount="indefinite"
+                values="M0 50 Q 25 20 50 50 T 100 50 V 100 H 0 Z;
+                        M0 50 Q 25 80 50 50 T 100 50 V 100 H 0 Z;
+                        M0 50 Q 25 20 50 50 T 100 50 V 100 H 0 Z" />
             </path>
-            {/* 波 2: スカイブルー系 (より濃く) */}
-            <path fill="#0ea5e9" opacity="0.6">
+            {/* 波 2: スカイブルー系 (リズム: 7s, 振幅中) */}
+            <path fill="#3b82f6" opacity="0.5">
               <animate attributeName="d" dur="7s" repeatCount="indefinite"
-                values="M0 55 Q 25 65 50 55 T 100 55 V 100 H 0 Z;
-                        M0 55 Q 25 45 50 55 T 100 55 V 100 H 0 Z;
-                        M0 55 Q 25 65 50 55 T 100 55 V 100 H 0 Z" />
+                values="M0 55 Q 25 70 50 55 T 100 55 V 100 H 0 Z;
+                        M0 55 Q 25 40 50 55 T 100 55 V 100 H 0 Z;
+                        M0 55 Q 25 70 50 55 T 100 55 V 100 H 0 Z" />
             </path>
-            {/* 波 3: バイオレット系 (存在感を出す) */}
-            <path fill="#a78bfa" opacity="0.5">
-              <animate attributeName="d" dur="13s" repeatCount="indefinite"
-                values="M0 45 Q 25 35 50 45 T 100 45 V 100 H 0 Z;
-                        M0 45 Q 25 55 50 45 T 100 45 V 100 H 0 Z;
-                        M0 45 Q 25 35 50 45 T 100 45 V 100 H 0 Z" />
+            {/* 波 3: バイオレット系 (リズム: 19s, 振幅最大) */}
+            <path fill="#8b5cf6" opacity="0.4">
+              <animate attributeName="d" dur="19s" repeatCount="indefinite"
+                values="M0 45 Q 25 10 50 45 T 100 45 V 100 H 0 Z;
+                        M0 45 Q 25 90 50 45 T 100 45 V 100 H 0 Z;
+                        M0 45 Q 25 10 50 45 T 100 45 V 100 H 0 Z" />
             </path>
 
             {/* 波紋レイヤーをSVG内部に移動し、clipPathを適用 */}

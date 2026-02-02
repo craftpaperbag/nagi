@@ -12,7 +12,7 @@
     }
     50% {
       opacity: 1.0;
-      transform: translateY(-2px);
+      transform: translateY(-8px); /* 2px から 8px に強化 */
     }
     100% {
       opacity: 0.8;
