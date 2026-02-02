@@ -1,16 +1,21 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useTransitionContext } from './TransitionContext';
 
 export default function DatePicker({ defaultValue }: { defaultValue: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { startTransition } = useTransitionContext();
 
   const updateDate = (newDate: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('date', newDate);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    // startTransition で包む
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
