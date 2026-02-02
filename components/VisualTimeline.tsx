@@ -12,10 +12,19 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
 
   const addRipple = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.closest('.timeline-container')?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const container = e.currentTarget.closest('.timeline-container');
+    const svg = container?.querySelector('svg');
+    if (!container || !svg) return;
+    
+    const rect = container.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    
+    // ピクセル座標を 0-100 の viewBox 単位に変換
+    // x はコンテナ全体に対する割合 (SVGが w-full なので)
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    // y は SVG の viewBox (0-100) に合わせるため、SVG の矩形に対する割合にする
+    const y = ((e.clientY - svgRect.top) / svgRect.height) * 100;
+    
     const id = Date.now();
     setRipples(prev => [...prev, { id, x, y }]);
     // 2秒後に削除
@@ -105,6 +114,18 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
           <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              {/* 波の形に切り抜くためのマスク定義 (最も高い波に合わせる) */}
+              <clipPath id="wave-mask">
+                <path d="M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z">
+                  <animate attributeName="d" dur="8s" repeatCount="indefinite"
+                    values="M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z;
+                            M0 40 Q 25 50 50 40 T 100 40 V 100 H 0 Z;
+                            M0 40 Q 25 30 50 40 T 100 40 V 100 H 0 Z" />
+                </path>
+              </clipPath>
+            </defs>
+
             {/* 波 1: シアン系 (より鮮やかに) */}
             <path fill="#22d3ee" opacity="0.6">
               <animate attributeName="d" dur="10s" repeatCount="indefinite"
@@ -126,6 +147,22 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                         M0 45 Q 25 55 50 45 T 100 45 V 100 H 0 Z;
                         M0 45 Q 25 35 50 45 T 100 45 V 100 H 0 Z" />
             </path>
+
+            {/* 波紋レイヤーをSVG内部に移動し、clipPathを適用 */}
+            <g clipPath="url(#wave-mask)">
+              {ripples.map(ripple => (
+                <ellipse
+                  key={ripple.id}
+                  cx={ripple.x}
+                  cy={ripple.y}
+                  rx="20"
+                  ry="10"
+                  fill="white"
+                  className="animate-nagi-ripple opacity-0"
+                  style={{ transformOrigin: `${ripple.x}% ${ripple.y}%` }}
+                />
+              ))}
+            </g>
           </svg>
         </div>
 
@@ -134,24 +171,6 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
           className={`absolute inset-y-0 right-0 bg-slate-100 z-10 ${isLarge ? '' : 'rounded-r-xl'}`}
           style={{ width: `${((totalMinutes - limitMin) / totalMinutes) * 100}%` }}
         />
-
-        {/* 2.5 波紋レイヤー (pointer-events-none でクリックを邪魔しない) */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-15">
-          {ripples.map(ripple => (
-            <div
-              key={ripple.id}
-              className="absolute rounded-full bg-sky-300/30 animate-nagi-ripple"
-              style={{
-                left: ripple.x,
-                top: ripple.y,
-                width: '100px',
-                height: '100px',
-                marginLeft: '-50px',
-                marginTop: '-50px',
-              }}
-            />
-          ))}
-        </div>
 
         {/* 3. セグメントレイヤー (石が波を上書きする) */}
         <div className="flex h-full w-full relative z-20">

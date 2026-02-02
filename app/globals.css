@@ -20,14 +20,14 @@
     }
   }
 
-  /* 波紋のキーフレーム */
+  /* 波紋のキーフレーム (側面視点) */
   @keyframes nagi-ripple {
     0% {
       transform: scale(0);
-      opacity: 0.5;
+      opacity: 0.8;
     }
     100% {
-      transform: scale(4);
+      transform: scaleX(6) scaleY(2); /* 横方向に大きく広げる */
       opacity: 0;
     }
   }
