@@ -4,6 +4,7 @@ import LoginForm from '@/components/LoginForm';
 import QRCode from 'qrcode';
 import DatePicker from '@/components/DatePicker';
 import { revalidatePath } from 'next/cache';
+import VisualTimeline from '@/components/VisualTimeline';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -167,8 +168,14 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             </section>
             
             <section className="min-h-[600px]">
+              {/* 新しい視覚的タイムライン */}
+              <div className="mb-12">
+                <h2 className="text-xl font-bold mb-6">タイムライン</h2>
+                <VisualTimeline logs={logs} selectedDate={selectedDate} />
+              </div>
+
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <h2 className="text-xl font-bold">タイムライン</h2>
+                <h2 className="text-xl font-bold">ログ表示</h2>
                 <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
                   <DatePicker defaultValue={selectedDate} />
                 </div>
