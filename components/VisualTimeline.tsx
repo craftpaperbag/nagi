@@ -95,23 +95,23 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
             {/* 波 1: シアン系 (中央付近を流れるリボン状) */}
             <path fill="#06b6d4" opacity="0.5">
               <animate attributeName="d" dur="12s" repeatCount="indefinite"
-                values="M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z;
-                        M0 40 Q 25 50 50 40 T 100 40 V 60 Q 75 50 50 60 T 0 60 Z;
-                        M0 40 Q 25 30 50 40 T 100 40 V 60 Q 75 70 50 60 T 0 60 Z" />
+                values="M0 40 Q 25 30 50 40 T 100 40 V 65 Q 75 55 50 65 T 0 65 Z;
+                        M0 40 Q 25 48 50 40 T 100 40 V 62 Q 75 72 50 62 T 0 62 Z;
+                        M0 40 Q 25 30 50 40 T 100 40 V 65 Q 75 55 50 65 T 0 65 Z" />
             </path>
             {/* 波 2: スカイブルー系 */}
             <path fill="#3b82f6" opacity="0.5">
               <animate attributeName="d" dur="7s" repeatCount="indefinite"
-                values="M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z;
-                        M0 45 Q 25 35 50 45 T 100 45 V 55 Q 75 65 50 55 T 0 55 Z;
-                        M0 45 Q 25 55 50 45 T 100 45 V 55 Q 75 45 50 55 T 0 55 Z" />
+                values="M0 45 Q 25 55 50 45 T 100 45 V 58 Q 75 65 50 58 T 0 58 Z;
+                        M0 45 Q 25 38 50 45 T 100 45 V 54 Q 75 45 50 54 T 0 54 Z;
+                        M0 45 Q 25 55 50 45 T 100 45 V 58 Q 75 65 50 58 T 0 58 Z" />
             </path>
             {/* 波 3: バイオレット系 */}
             <path fill="#8b5cf6" opacity="0.4">
               <animate attributeName="d" dur="19s" repeatCount="indefinite"
-                values="M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z;
-                        M0 35 Q 25 50 50 35 T 100 35 V 65 Q 75 50 50 65 T 0 65 Z;
-                        M0 35 Q 25 20 50 35 T 100 35 V 65 Q 75 80 50 65 T 0 65 Z" />
+                values="M0 35 Q 25 20 50 35 T 100 35 V 70 Q 75 80 50 70 T 0 70 Z;
+                        M0 35 Q 25 45 50 35 T 100 35 V 68 Q 75 55 50 68 T 0 68 Z;
+                        M0 35 Q 25 20 50 35 T 100 35 V 70 Q 75 80 50 70 T 0 70 Z" />
             </path>
           </svg>
         </div>
