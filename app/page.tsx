@@ -53,15 +53,15 @@ async function addDummyLog(formData: FormData) {
   revalidatePath('/');
 }
 
-export default async function Home(props: { searchParams: Promise<{ date?: string }> }) {
-  const searchParams = await props.searchParams;
+export default async function Home(props: { searchParams: Promise<{ date?: string; target?: string }> }) {
+  const { date, target: targetApp = '' } = await props.searchParams;
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
 
   // 日本時間の今日の日付 (YYYY-MM-DD)
   const now = new Date();
   const today = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
-  const selectedDate = searchParams.date || today;
+  const selectedDate = date || today;
 
   // デバッグフォーム用の初期日時 (YYYY-MM-DDTHH:mm)
   const currentDateTimeJst = now.toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' }).replace(' ', 'T').slice(0, 16);
@@ -74,10 +74,13 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
     if (userId) {
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
-        logs = await getLogsByDate(userId, selectedDate); // 指定日のログを取得
+        logs = await getLogsByDate(userId, selectedDate);
       }
     }
   }
+
+  // ログからユニークなアプリ名（空文字以外）を抽出
+  const uniqueApps = Array.from(new Set(logs.map(l => l.app).filter(Boolean))).sort();
 
   // QRコードの生成 (サーバーサイド)
   const shortcutUrl = process.env.SHORTCUT_URL || '';
@@ -170,8 +173,28 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             <section className="min-h-[600px]">
               {/* 新しい視覚的タイムライン */}
               <div className="mb-12">
-                <h2 className="text-xl font-bold mb-6">タイムライン</h2>
-                <VisualTimeline logs={logs} selectedDate={selectedDate} />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h2 className="text-xl font-bold">タイムライン</h2>
+                  <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
+                    {uniqueApps.map(app => (
+                      <a
+                        key={app}
+                        href={`?date=${selectedDate}&target=${encodeURIComponent(app)}`}
+                        className={`px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
+                          targetApp === app 
+                            ? 'bg-slate-800 text-white shadow-sm' 
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      >
+                        {app}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+                <VisualTimeline logs={logs} selectedDate={selectedDate} targetApp={targetApp} />
+                {!targetApp && uniqueApps.length > 0 && (
+                  <p className="text-[10px] text-slate-400 mt-2 text-right italic">アプリを選択すると「石」が表示されます</p>
+                )}
               </div>
 
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
