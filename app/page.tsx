@@ -53,6 +53,24 @@ async function addDummyLog(formData: FormData) {
   revalidatePath('/');
 }
 
+// ログを削除するためのサーバーアクション
+async function deleteLog(formData: FormData) {
+  'use server';
+  if (process.env.NODE_ENV !== 'development') return;
+
+  const userId = formData.get('userId') as string;
+  const dateStr = formData.get('dateStr') as string;
+  const logJson = formData.get('logJson') as string;
+
+  if (!userId || !dateStr || !logJson) return;
+
+  const logKey = `logs:${userId}:${dateStr}`;
+  // Redisから一致するログを1つ削除
+  await redisClient.lrem(logKey, 1, JSON.parse(logJson));
+  
+  revalidatePath('/');
+}
+
 export default async function Home(props: { searchParams: Promise<{ date?: string; target?: string }> }) {
   const { date, target: targetApp = '' } = await props.searchParams;
   const cookieStore = await cookies();
@@ -208,15 +226,29 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                 <ul className="flex flex-col gap-2">
                   {logs.map((log, i) => (
                     <li key={i} className="p-3 bg-gray-50 rounded border border-gray-100">
-                      <span className="font-mono text-sm mr-4 text-gray-400">
-                        {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tokyo' })}
-                      </span>
-                      <span className="font-medium">
-                        {log.app || <span className="text-slate-400 italic">Home Screen</span>}
-                      </span>
-                      {log.is_dummy && (
-                        <span className="ml-2 text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Dummy</span>
-                      )}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-mono text-sm mr-4 text-gray-400">
+                            {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tokyo' })}
+                          </span>
+                          <span className="font-medium">
+                            {log.app || <span className="text-slate-400 italic">Home Screen</span>}
+                          </span>
+                          {log.is_dummy && (
+                            <span className="ml-2 text-[10px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-bold uppercase">Dummy</span>
+                          )}
+                        </div>
+                        {process.env.NODE_ENV === 'development' && user && (
+                          <form action={deleteLog}>
+                            <input type="hidden" name="userId" value={user.id} />
+                            <input type="hidden" name="dateStr" value={selectedDate} />
+                            <input type="hidden" name="logJson" value={JSON.stringify(log)} />
+                            <button type="submit" className="text-[10px] text-red-400 hover:text-red-600 font-bold border border-red-100 px-2 py-0.5 rounded bg-white transition-colors">
+                              Delete
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
