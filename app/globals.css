@@ -2,33 +2,16 @@
 
 @theme {
   --animate-nagi-wave: nagi-wave 10s ease-in-out infinite;
-  /* 波紋アニメーションを追加 */
-  --animate-nagi-ripple: nagi-ripple 2s cubic-bezier(0, 0, 0.2, 1) forwards;
 
   @keyframes nagi-wave {
     0% {
       opacity: 0.8;
-      transform: translateY(0px);
     }
     50% {
       opacity: 1.0;
-      transform: translateY(-8px); /* 2px から 8px に強化 */
     }
     100% {
       opacity: 0.8;
-      transform: translateY(0px);
-    }
-  }
-
-  /* 波紋のキーフレーム (側面視点) */
-  @keyframes nagi-ripple {
-    0% {
-      transform: scale(0);
-      opacity: 0.8;
-    }
-    100% {
-      transform: scaleX(6) scaleY(2); /* 横方向に大きく広げる */
-      opacity: 0;
     }
   }
 }

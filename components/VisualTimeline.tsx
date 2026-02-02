@@ -1,38 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-
 interface LogEntry {
   ts: number;
   app: string;
 }
 
 export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge }: { logs: LogEntry[], selectedDate: string, targetApp: string, isLarge?: boolean }) {
-  // 波紋の状態管理
-  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-
-  const addRipple = (e: React.MouseEvent<HTMLDivElement>) => {
-    const container = e.currentTarget.closest('.timeline-container');
-    const svg = container?.querySelector('svg');
-    if (!container || !svg) return;
-    
-    const rect = container.getBoundingClientRect();
-    const svgRect = svg.getBoundingClientRect();
-    
-    // ピクセル座標を 0-100 の viewBox 単位に変換
-    // x はコンテナ全体に対する割合 (SVGが w-full なので)
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    // y は SVG の viewBox (0-100) に合わせるため、SVG の矩形に対する割合にする
-    const y = ((e.clientY - svgRect.top) / svgRect.height) * 100;
-    
-    const id = Date.now();
-    setRipples(prev => [...prev, { id, x, y }]);
-    // 2秒後に削除
-    setTimeout(() => {
-      setRipples(prev => prev.filter(r => r.id !== id));
-    }, 2000);
-  };
-
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
   const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
@@ -100,7 +73,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   const formatDuration = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = Math.round(mins % 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    return h > 0 ? `${h}時間 ${m}分` : `${m}分`;
   };
 
   return (
@@ -152,22 +125,6 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                         M0 45 Q 25 90 50 45 T 100 45 V 100 H 0 Z;
                         M0 45 Q 25 10 50 45 T 100 45 V 100 H 0 Z" />
             </path>
-
-            {/* 波紋レイヤーをSVG内部に移動し、clipPathを適用 */}
-            <g clipPath="url(#wave-mask)">
-              {ripples.map(ripple => (
-                <ellipse
-                  key={ripple.id}
-                  cx={ripple.x}
-                  cy={ripple.y}
-                  rx="20"
-                  ry="10"
-                  fill="white"
-                  className="animate-nagi-ripple opacity-0"
-                  style={{ transformOrigin: `${ripple.x}% ${ripple.y}%` }}
-                />
-              ))}
-            </g>
           </svg>
         </div>
 
@@ -194,19 +151,18 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                     
                     {/* ツールチップ (Stone) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                      <span className="opacity-70">stilled:</span> {formatDuration(totalStoneMin)}
+                      <span className="opacity-70">静止:</span> {formatDuration(totalStoneMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
                     </div>
                   </div>
                 ) : (
                   /* 波のセグメント */
                   <div 
-                    className="w-full h-full relative cursor-pointer"
-                    onClick={addRipple}
+                    className="w-full h-full relative"
                   >
                     {/* ツールチップ (Wave) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-white/90 backdrop-blur-sm text-slate-600 text-[10px] border border-slate-200 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                      <span className="opacity-70">flowing:</span> {formatDuration(totalWaveMin)}
+                      <span className="opacity-70">流動:</span> {formatDuration(totalWaveMin)}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white/90" />
                     </div>
                   </div>
@@ -241,11 +197,11 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         <div className={`mt-3 flex flex-wrap gap-x-6 gap-y-2 px-1 text-[11px] text-slate-500 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-            <span>stilled by {targetApp}</span>
+            <span>{targetApp} による静止</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
-            <span>flowing freely</span>
+            <span>自由な流動</span>
           </div>
         </div>
       )}
