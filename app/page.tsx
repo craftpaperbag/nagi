@@ -22,7 +22,8 @@ interface User {
   email: string;
   api_token: string;
   created_at: string;
-  setup_completed?: boolean; // 追加
+  setup_completed?: boolean;
+  target_apps?: string[]; // 追加
 }
 
 // 特定の日付のログを取得する関数
@@ -36,6 +37,30 @@ async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[
 
   // 新しい順に表示するため、取得後にreverseする
   return [...filteredLogs].reverse();
+}
+
+// ターゲットアプリを切り替えるサーバーアクション
+async function toggleTargetApp(formData: FormData) {
+  'use server';
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+  const app = formData.get('app') as string;
+
+  if (!userId || !app) return;
+
+  const user = await redisClient.get<User>(`user:${userId}`);
+  if (user) {
+    const targetApps = user.target_apps || [];
+    if (targetApps.includes(app)) {
+      user.target_apps = targetApps.filter(a => a !== app);
+    } else {
+      user.target_apps = [...targetApps, app];
+    }
+    await redisClient.set(`user:${userId}`, user);
+  }
+  
+  revalidatePath('/');
 }
 
 // ダミーデータ登録用サーバーアクション
@@ -104,8 +129,8 @@ async function updateSetupStatus(formData: FormData) {
   revalidatePath('/');
 }
 
-export default async function Home(props: { searchParams: Promise<{ date?: string; target?: string; settings?: string; large?: string }> }) {
-  const { date, target: targetApp = '', settings: settingsParam, large: largeParam } = await props.searchParams;
+export default async function Home(props: { searchParams: Promise<{ date?: string; settings?: string; large?: string }> }) {
+  const { date, settings: settingsParam, large: largeParam } = await props.searchParams;
   const showSettings = settingsParam === 'true';
   const isLarge = largeParam === 'true';
   const cookieStore = await cookies();
@@ -141,6 +166,8 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   }, {} as Record<string, number>);
 
   const uniqueApps = Object.keys(appCounts).sort((a, b) => appCounts[b] - appCounts[a]);
+  // ターゲットに設定されているが今日のログにはないアプリも表示に含める
+  const displayApps = user ? Array.from(new Set([...uniqueApps, ...(user.target_apps || [])])) : uniqueApps;
 
   // QRコードの生成 (サーバーサイド)
   const shortcutUrl = process.env.SHORTCUT_URL || '';
@@ -286,7 +313,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                       <div className="flex items-center gap-3">
                         <h2 className="text-xl font-bold">タイムライン</h2>
                         <Link
-                          href={`?date=${selectedDate}&target=${encodeURIComponent(targetApp)}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
+                          href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
                           scroll={false}
                           className="text-[10px] px-2 py-0.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
                         >
@@ -294,24 +321,28 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         </Link>
                       </div>
                       <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
-                        {uniqueApps.map(app => (
-                          <Link
-                            key={app}
-                            href={`?date=${selectedDate}&target=${encodeURIComponent(app)}${isLarge ? '&large=true' : ''}`}
-                            scroll={false}
-                            className={`px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
-                              targetApp === app 
-                                ? 'bg-slate-800 text-white shadow-sm' 
-                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                            }`}
-                          >
-                            {app}
-                          </Link>
-                        ))}
+                        {displayApps.map(app => {
+                          const isTarget = user?.target_apps?.includes(app);
+                          return (
+                            <form key={app} action={toggleTargetApp}>
+                              <input type="hidden" name="app" value={app} />
+                              <button
+                                type="submit"
+                                className={`px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all ${
+                                  isTarget 
+                                    ? 'bg-slate-600 text-slate-100 shadow-sm' 
+                                    : 'bg-cyan-50 text-cyan-700 border border-cyan-100 hover:bg-cyan-100'
+                                }`}
+                              >
+                                {app}
+                              </button>
+                            </form>
+                          );
+                        })}
                       </div>
                     </div>
-                    <VisualTimeline logs={logs} selectedDate={selectedDate} targetApp={targetApp} isLarge={isLarge} />
-                    {!targetApp && uniqueApps.length > 0 && (
+                    <VisualTimeline logs={logs} selectedDate={selectedDate} targetApps={user.target_apps || []} isLarge={isLarge} />
+                    {(!user.target_apps || user.target_apps.length === 0) && displayApps.length > 0 && (
                       <p className="text-[10px] text-slate-400 mt-2 text-right italic">アプリを選択すると「石」が表示されます</p>
                     )}
                   </div>

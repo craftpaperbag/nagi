@@ -6,7 +6,7 @@ interface LogEntry {
   app: string;
 }
 
-export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge }: { logs: LogEntry[], selectedDate: string, targetApp: string, isLarge?: boolean }) {
+export default function VisualTimeline({ logs, selectedDate, targetApps, isLarge }: { logs: LogEntry[], selectedDate: string, targetApps: string[], isLarge?: boolean }) {
   const [isStoneHovered, setIsStoneHovered] = useState(false);
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
@@ -31,7 +31,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   const segments: { start: number; end: number; type: 'stone' | 'wave'; app?: string }[] = [];
 
   // アプリが選択されている場合のみセグメントを計算
-  if (targetApp) {
+  if (targetApps.length > 0) {
     let lastTs = startOfDay;
     let isStoneActive = false;
 
@@ -52,13 +52,13 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
             start: startMin,
             end: effectiveEndMin,
             type,
-            app: isStoneActive ? targetApp : undefined
+            app: isStoneActive ? log.app : undefined
           });
         }
       }
       
-      // 次の区間の状態を決定: 選択されたアプリならStone開始、それ以外ならWave開始
-      isStoneActive = (log.app === targetApp && targetApp !== "");
+      // 次の区間の状態を決定: 選択されたアプリのいずれかならStone開始、それ以外ならWave開始
+      isStoneActive = targetApps.includes(log.app);
       lastTs = log.ts;
     });
 
@@ -73,7 +73,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
           start: startMin,
           end: limitMin,
           type,
-          app: isStoneActive ? targetApp : undefined
+          app: isStoneActive ? undefined : undefined // 最後の状態を保持
         });
       }
     }
@@ -209,11 +209,11 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
 
       {/* 凡例の追加 */}
       <div className={`mt-3 flex flex-col gap-2 px-1 ${isLarge ? 'max-w-2xl mx-auto' : ''}`}>
-        {targetApp && (
+        {targetApps.length > 0 && (
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-[11px] text-slate-500">
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 bg-slate-400 rounded-sm shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]" />
-              <span>{targetApp} による拘束</span>
+              <span>選択したアプリによる拘束</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 bg-sky-200 rounded-sm border border-sky-100" />
