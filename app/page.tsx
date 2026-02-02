@@ -179,7 +179,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   {logs.map((log, i) => (
                     <li key={i} className="p-3 bg-gray-50 rounded border border-gray-100">
                       <span className="font-mono text-sm mr-4 text-gray-400">
-                        {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        {new Date(log.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Tokyo' })}
                       </span>
                       <span className="font-medium">
                         {log.app || <span className="text-slate-400 italic">Home Screen</span>}
