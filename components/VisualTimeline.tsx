@@ -69,9 +69,9 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   return (
     <div className={`relative transition-all duration-500 ease-in-out ${
       isLarge 
-        ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-200 shadow-inner' 
-        : 'w-full h-20 rounded-xl border border-slate-200 shadow-inner'
-    } bg-slate-50 overflow-hidden flex`}>
+        ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-300/50 shadow-inner' 
+        : 'w-full h-20 rounded-xl border border-slate-300/50 shadow-inner'
+    } bg-slate-100 overflow-hidden flex`}>
       {/* 現在時刻の強調表示 */}
       {isToday && (
         <div 
@@ -97,10 +97,10 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
                 <div className={`absolute inset-0 bg-black/10 ${isLarge ? 'opacity-20' : 'opacity-10'}`} />
               </div>
             ) : (
-              <div className="w-full h-full bg-gradient-to-b from-sky-50 via-white to-indigo-50 overflow-hidden">
+              <div className="w-full h-full bg-white/60 overflow-hidden">
                 {/* 波のパステルエフェクト */}
-                <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} opacity-30 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <path d="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" fill="#bae6fd">
+                <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} opacity-60 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" fill="#7dd3fc">
                     <animate attributeName="d" dur="8s" repeatCount="indefinite"
                       values="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z;
                               M0 50 Q 25 60 50 50 T 100 50 V 100 H 0 Z;
