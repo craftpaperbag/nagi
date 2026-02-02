@@ -67,14 +67,18 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   }
 
   return (
-    <div className={`relative w-full ${isLarge ? 'h-48' : 'h-20'} bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex transition-all duration-300`}>
+    <div className={`relative transition-all duration-500 ease-in-out ${
+      isLarge 
+        ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-x-0 shadow-2xl z-10' 
+        : 'w-full h-20 rounded-xl border shadow-inner'
+    } bg-slate-50 overflow-hidden border-slate-200 flex`}>
       {/* 現在時刻の強調表示 */}
       {isToday && (
         <div 
-          className="absolute top-0 bottom-0 w-px bg-slate-400 z-20 pointer-events-none"
+          className={`absolute top-0 bottom-0 w-px bg-slate-400 z-20 pointer-events-none ${isLarge ? 'opacity-50' : ''}`}
           style={{ left: `${(limitMin / totalMinutes) * 100}%` }}
         >
-          <div className="absolute -top-1 -left-1 w-2 h-2 bg-slate-400 rounded-full border border-white shadow-sm" />
+          <div className={`absolute -top-1 -left-1 rounded-full border border-white shadow-sm bg-slate-400 ${isLarge ? 'w-3 h-3' : 'w-2 h-2'}`} />
         </div>
       )}
 
@@ -85,14 +89,17 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         return (
           <div key={i} style={{ width }} className="h-full relative">
             {seg.type === 'stone' ? (
-              <div className="w-full h-full bg-slate-400 border-x border-slate-500/20 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] transition-colors hover:bg-slate-500" title={seg.app}>
-                {/* 石板のテクスチャ（簡易表現） */}
-                <div className="absolute inset-0 opacity-10 bg-black/10" />
+              <div 
+                className={`w-full h-full bg-slate-400 border-x border-slate-500/20 transition-colors hover:bg-slate-500 ${isLarge ? 'shadow-[inset_0_4px_12px_rgba(0,0,0,0.2)]' : 'shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]'}`} 
+                title={seg.app}
+              >
+                {/* 石板のテクスチャ */}
+                <div className={`absolute inset-0 bg-black/10 ${isLarge ? 'opacity-20' : 'opacity-10'}`} />
               </div>
             ) : (
               <div className="w-full h-full bg-gradient-to-b from-sky-50 via-white to-indigo-50 overflow-hidden">
                 {/* 波のパステルエフェクト */}
-                <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-32' : 'h-12'} opacity-30 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
+                <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} opacity-30 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
                   <path d="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" fill="#bae6fd">
                     <animate attributeName="d" dur="8s" repeatCount="indefinite"
                       values="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z;
@@ -107,9 +114,11 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
       })}
       
       {/* 時間軸ラベル */}
-      <div className="absolute bottom-1 left-0 w-full flex justify-between px-2 text-[9px] text-slate-400 font-mono pointer-events-none">
+      <div className={`absolute bottom-2 left-0 w-full flex justify-between px-4 text-slate-400 font-mono pointer-events-none ${isLarge ? 'text-xs' : 'text-[9px]'}`}>
         <span>00:00</span>
+        {isLarge && <span>06:00</span>}
         <span>12:00</span>
+        {isLarge && <span>18:00</span>}
         <span>23:59</span>
       </div>
     </div>
