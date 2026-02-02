@@ -76,12 +76,27 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className="absolute inset-0 bg-white pointer-events-none">
-          <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} opacity-60 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
-            <path d="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" fill="#7dd3fc">
-              <animate attributeName="d" dur="8s" repeatCount="indefinite"
+          <svg className={`absolute bottom-0 w-full ${isLarge ? 'h-64' : 'h-12'} opacity-80 animate-nagi-wave`} viewBox="0 0 100 100" preserveAspectRatio="none">
+            {/* 波 1: シアン系 (ベース) */}
+            <path fill="#a5f3fc" opacity="0.4">
+              <animate attributeName="d" dur="10s" repeatCount="indefinite"
                 values="M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z;
                         M0 50 Q 25 60 50 50 T 100 50 V 100 H 0 Z;
                         M0 50 Q 25 40 50 50 T 100 50 V 100 H 0 Z" />
+            </path>
+            {/* 波 2: スカイブルー系 (色収差的なズレ) */}
+            <path fill="#7dd3fc" opacity="0.4">
+              <animate attributeName="d" dur="7s" repeatCount="indefinite"
+                values="M0 55 Q 25 65 50 55 T 100 55 V 100 H 0 Z;
+                        M0 55 Q 25 45 50 55 T 100 55 V 100 H 0 Z;
+                        M0 55 Q 25 65 50 55 T 100 55 V 100 H 0 Z" />
+            </path>
+            {/* 波 3: バイオレット系 (深みと揺らぎ) */}
+            <path fill="#ddd6fe" opacity="0.3">
+              <animate attributeName="d" dur="13s" repeatCount="indefinite"
+                values="M0 45 Q 25 35 50 45 T 100 45 V 100 H 0 Z;
+                        M0 45 Q 25 55 50 45 T 100 45 V 100 H 0 Z;
+                        M0 45 Q 25 35 50 45 T 100 45 V 100 H 0 Z" />
             </path>
           </svg>
         </div>
