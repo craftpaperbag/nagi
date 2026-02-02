@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 interface LogEntry {
   ts: number;
@@ -6,6 +7,7 @@ interface LogEntry {
 }
 
 export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge }: { logs: LogEntry[], selectedDate: string, targetApp: string, isLarge?: boolean }) {
+  const [isStoneHovered, setIsStoneHovered] = useState(false);
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
   const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
@@ -41,12 +43,18 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
       const effectiveEndMin = Math.min(endMin, limitMin);
 
       if (effectiveEndMin > startMin) {
-        segments.push({
-          start: startMin,
-          end: effectiveEndMin,
-          type: isStoneActive ? 'stone' : 'wave',
-          app: isStoneActive ? targetApp : undefined
-        });
+        const type = isStoneActive ? 'stone' : 'wave';
+        // 直前と同じタイプなら結合
+        if (segments.length > 0 && segments[segments.length - 1].type === type) {
+          segments[segments.length - 1].end = effectiveEndMin;
+        } else {
+          segments.push({
+            start: startMin,
+            end: effectiveEndMin,
+            type,
+            app: isStoneActive ? targetApp : undefined
+          });
+        }
       }
       
       // 次の区間の状態を決定: 選択されたアプリならStone開始、それ以外ならWave開始
@@ -57,12 +65,17 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
     // 最後のログから制限時刻まで
     const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
     if (startMin < limitMin) {
-      segments.push({
-        start: startMin,
-        end: limitMin,
-        type: isStoneActive ? 'stone' : 'wave',
-        app: isStoneActive ? targetApp : undefined
-      });
+      const type = isStoneActive ? 'stone' : 'wave';
+      if (segments.length > 0 && segments[segments.length - 1].type === type) {
+        segments[segments.length - 1].end = limitMin;
+      } else {
+        segments.push({
+          start: startMin,
+          end: limitMin,
+          type,
+          app: isStoneActive ? targetApp : undefined
+        });
+      }
     }
   }
 
@@ -132,10 +145,24 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
               <div key={i} style={{ width }} className="h-full relative group">
                 {seg.type === 'stone' ? (
                   <div 
-                    className={`w-full h-full bg-slate-400 border-x border-slate-500/20 transition-colors hover:bg-slate-500 ${isLarge ? 'shadow-[inset_0_4px_12px_rgba(0,0,0,0.2)]' : 'shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]'}`} 
+                    className="absolute top-1/4 w-full h-1/2 transition-all duration-300"
+                    style={{ 
+                      filter: isLarge 
+                        ? `drop-shadow(0 ${isStoneHovered ? '8px 12px' : '6px 8px'} rgba(0,0,0,0.4))` 
+                        : `drop-shadow(0 ${isStoneHovered ? '3px 5px' : '2px 3px'} rgba(0,0,0,0.3))`
+                    }}
+                    onMouseEnter={() => setIsStoneHovered(true)}
+                    onMouseLeave={() => setIsStoneHovered(false)}
                   >
-                    {/* 石板のテクスチャ */}
-                    <div className={`absolute inset-0 bg-black/10 ${isLarge ? 'opacity-20' : 'opacity-10'}`} />
+                    <div 
+                      className={`w-full h-full bg-gradient-to-b from-slate-400 via-slate-600 to-slate-800 stone-mask transition-colors duration-300 ${isStoneHovered ? 'brightness-125' : 'brightness-100'}`}
+                      style={{ 
+                        clipPath: 'polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px)'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)]" />
+                      <div className={`absolute inset-0 bg-black/20 mix-blend-overlay ${isLarge ? 'opacity-40' : 'opacity-20'}`} />
+                    </div>
                     
                     {/* ツールチップ (Stone) */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">

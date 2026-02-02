@@ -15,3 +15,12 @@
     }
   }
 }
+
+.stone-mask {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100' preserveAspectRatio='none'%3E%3Cpath d='M0 18 L20 28 L45 12 L75 25 L100 5 L130 22 L165 8 L185 25 L200 15 V85 L180 92 L155 75 L125 95 L95 80 L65 92 L35 78 L15 95 L0 82 Z' fill='black'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100' preserveAspectRatio='none'%3E%3Cpath d='M0 18 L20 28 L45 12 L75 25 L100 5 L130 22 L165 8 L185 25 L200 15 V85 L180 92 L155 75 L125 95 L95 80 L65 92 L35 78 L15 95 L0 82 Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-size: 180px 100%;
+  mask-size: 180px 100%;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
