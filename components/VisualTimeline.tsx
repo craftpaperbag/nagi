@@ -10,47 +10,74 @@ export default function VisualTimeline({ logs, selectedDate, targetApp }: { logs
   // 日本時間の開始時刻をミリ秒で取得
   const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
   
+  // 現在時刻 (JST) の計算
+  const now = new Date();
+  const todayStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const isToday = selectedDate === todayStr;
+  const isFuture = selectedDate > todayStr;
+  
+  const jstTimeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' });
+  const [hours, minutes] = jstTimeStr.split(':').map(Number);
+  const currentMin = hours * 60 + minutes;
+
+  // 描画する終端時刻（分）
+  const limitMin = isToday ? currentMin : (isFuture ? 0 : totalMinutes);
+
   // ログを時間順（昇順）にソート
   const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts);
 
   const segments: { start: number; end: number; type: 'stone' | 'wave'; app?: string }[] = [];
-  let lastTs = startOfDay;
-  let isStoneActive = false;
 
-  sortedLogs.forEach((log) => {
-    const durationMin = (log.ts - lastTs) / (1000 * 60);
+  // アプリが選択されている場合のみセグメントを計算
+  if (targetApp) {
+    let lastTs = startOfDay;
+    let isStoneActive = false;
 
-    if (durationMin > 0) {
-      const startMin = (lastTs - startOfDay) / (1000 * 60);
+    sortedLogs.forEach((log) => {
+      const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
       const endMin = (log.ts - startOfDay) / (1000 * 60);
+      
+      // 制限時刻で切り捨て
+      const effectiveEndMin = Math.min(endMin, limitMin);
 
+      if (effectiveEndMin > startMin) {
+        segments.push({
+          start: startMin,
+          end: effectiveEndMin,
+          type: isStoneActive ? 'stone' : 'wave',
+          app: isStoneActive ? targetApp : undefined
+        });
+      }
+      
+      // 次の区間の状態を決定: 選択されたアプリならStone開始、それ以外ならWave開始
+      isStoneActive = (log.app === targetApp && targetApp !== "");
+      lastTs = log.ts;
+    });
+
+    // 最後のログから制限時刻まで
+    const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
+    if (startMin < limitMin) {
       segments.push({
         start: startMin,
-        end: endMin,
+        end: limitMin,
         type: isStoneActive ? 'stone' : 'wave',
         app: isStoneActive ? targetApp : undefined
       });
     }
-    
-    // 次の区間の状態を決定: 選択されたアプリならStone開始、それ以外ならWave開始
-    isStoneActive = (log.app === targetApp && targetApp !== "");
-    lastTs = log.ts;
-  });
-
-  // 最後のログから一日の終わりまで
-  const endOfDay = startOfDay + (totalMinutes * 60 * 1000);
-  if (lastTs < endOfDay) {
-    const startMin = (lastTs - startOfDay) / (1000 * 60);
-    segments.push({
-      start: startMin,
-      end: totalMinutes,
-      type: isStoneActive ? 'stone' : 'wave',
-      app: isStoneActive ? targetApp : undefined
-    });
   }
 
   return (
     <div className="relative w-full h-20 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 shadow-inner flex">
+      {/* 現在時刻の強調表示 */}
+      {isToday && (
+        <div 
+          className="absolute top-0 bottom-0 w-px bg-slate-400 z-20 pointer-events-none"
+          style={{ left: `${(limitMin / totalMinutes) * 100}%` }}
+        >
+          <div className="absolute -top-1 -left-1 w-2 h-2 bg-slate-400 rounded-full border border-white shadow-sm" />
+        </div>
+      )}
+
       {segments.map((seg, i) => {
         const width = `${((seg.end - seg.start) / totalMinutes) * 100}%`;
         if (width === '0%') return null;
