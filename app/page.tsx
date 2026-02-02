@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redisClient } from '@/lib/redis';
 import LoginForm from '@/components/LoginForm';
 import QRCode from 'qrcode';
+import DatePicker from '@/components/DatePicker';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -134,20 +135,12 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
               </div>
             </section>
             
-            <section>
+            <section className="min-h-[600px]">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <h2 className="text-xl font-bold">タイムライン</h2>
-                <form className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                  <input 
-                    type="date" 
-                    name="date" 
-                    defaultValue={selectedDate}
-                    className="text-sm px-2 py-1 outline-none"
-                  />
-                  <button type="submit" className="text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-md hover:bg-slate-200 transition-colors">
-                    表示
-                  </button>
-                </form>
+                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                  <DatePicker defaultValue={selectedDate} />
+                </div>
               </div>
 
               {logs.length > 0 ? (
@@ -162,7 +155,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   ))}
                 </ul>
               ) : (
-                <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                <div className="py-24 text-center border-2 border-dashed border-slate-100 rounded-2xl">
                   <p className="text-slate-400 text-sm">{selectedDate} のログはありません</p>
                 </div>
               )}
