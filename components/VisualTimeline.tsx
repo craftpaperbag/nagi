@@ -69,9 +69,9 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
   return (
     <div className={`relative transition-all duration-500 ease-in-out ${
       isLarge 
-        ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-x-0 shadow-2xl z-10' 
-        : 'w-full h-20 rounded-xl border shadow-inner'
-    } bg-slate-50 overflow-hidden border-slate-200 flex`}>
+        ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-200 shadow-inner' 
+        : 'w-full h-20 rounded-xl border border-slate-200 shadow-inner'
+    } bg-slate-50 overflow-hidden flex`}>
       {/* 現在時刻の強調表示 */}
       {isToday && (
         <div 
