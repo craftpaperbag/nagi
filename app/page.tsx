@@ -39,6 +39,20 @@ async function getLogsByDate(userId: string, dateStr: string): Promise<LogEntry[
   return [...filteredLogs].reverse();
 }
 
+// 前日の最終ログを取得する関数
+async function getLastLogOfPrevDate(userId: string, dateStr: string): Promise<LogEntry | null> {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() - 1);
+  const prevDateStr = date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  
+  const logs = await redisClient.lrange<LogEntry>(`logs:${userId}:${prevDateStr}`, 0, -1);
+  const filteredLogs = process.env.NODE_ENV === 'development' 
+    ? logs 
+    : logs.filter(log => !log.is_dummy);
+
+  return filteredLogs.length > 0 ? filteredLogs[filteredLogs.length - 1] : null;
+}
+
 // ターゲットアプリを切り替えるサーバーアクション
 async function toggleTargetApp(formData: FormData) {
   'use server';
@@ -146,6 +160,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
 
   let user: User | null = null;
   let logs: LogEntry[] = [];
+  let prevDayLastLog: LogEntry | null = null;
 
   if (sessionId) {
     const userId = await redisClient.get<string>(`session:${sessionId}`);
@@ -153,6 +168,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
         logs = await getLogsByDate(userId, selectedDate);
+        prevDayLastLog = await getLastLogOfPrevDate(userId, selectedDate);
       }
     }
   }
@@ -341,7 +357,13 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         })}
                       </div>
                     </div>
-                    <VisualTimeline logs={logs} selectedDate={selectedDate} targetApps={user.target_apps || []} isLarge={isLarge} />
+                    <VisualTimeline 
+                      logs={logs} 
+                      selectedDate={selectedDate} 
+                      targetApps={user.target_apps || []} 
+                      isLarge={isLarge} 
+                      prevDayLastLog={prevDayLastLog}
+                    />
                     {(!user.target_apps || user.target_apps.length === 0) && displayApps.length > 0 && (
                       <p className="text-[10px] text-slate-400 mt-2 text-right italic">アプリを選択すると「石」が表示されます</p>
                     )}
@@ -351,8 +373,22 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     <h2 className="text-xl font-bold">ログ表示</h2>
                   </div>
 
-                  {logs.length > 0 ? (
+                  {logs.length > 0 || prevDayLastLog ? (
                     <ul className="flex flex-col gap-2">
+                      {prevDayLastLog && (
+                        <li className="p-3 bg-slate-50/50 rounded border border-slate-100 opacity-60">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-mono text-sm mr-4 text-gray-300">
+                                前日最終
+                              </span>
+                              <span className="font-medium text-slate-400">
+                                {prevDayLastLog.app || <span className="italic">Home Screen</span>}
+                              </span>
+                            </div>
+                          </div>
+                        </li>
+                      )}
                       {logs.map((log, i) => (
                         <li key={i} className="p-3 bg-gray-50 rounded border border-gray-100">
                           <div className="flex justify-between items-center">

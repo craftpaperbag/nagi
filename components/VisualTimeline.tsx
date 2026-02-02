@@ -6,7 +6,19 @@ interface LogEntry {
   app: string;
 }
 
-export default function VisualTimeline({ logs, selectedDate, targetApps, isLarge }: { logs: LogEntry[], selectedDate: string, targetApps: string[], isLarge?: boolean }) {
+export default function VisualTimeline({ 
+  logs, 
+  selectedDate, 
+  targetApps, 
+  isLarge,
+  prevDayLastLog
+}: { 
+  logs: LogEntry[], 
+  selectedDate: string, 
+  targetApps: string[], 
+  isLarge?: boolean,
+  prevDayLastLog?: LogEntry | null
+}) {
   const [isStoneHovered, setIsStoneHovered] = useState(false);
   const totalMinutes = 24 * 60;
   // 日本時間の開始時刻をミリ秒で取得
@@ -33,7 +45,8 @@ export default function VisualTimeline({ logs, selectedDate, targetApps, isLarge
   // アプリが選択されている場合のみセグメントを計算
   if (targetApps.length > 0) {
     let lastTs = startOfDay;
-    let isStoneActive = false;
+    // 初期状態を前日の最終ログに基づいて決定
+    let isStoneActive = prevDayLastLog ? targetApps.includes(prevDayLastLog.app) : false;
 
     sortedLogs.forEach((log) => {
       const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
