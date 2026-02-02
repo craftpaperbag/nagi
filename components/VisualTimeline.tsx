@@ -87,7 +87,7 @@ export default function VisualTimeline({ logs, selectedDate, targetApp, isLarge 
         {/* 1. 背景の波レイヤー (24時間分) */}
         <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
           <svg 
-            className="absolute top-0 left-0 w-full h-full animate-nagi-wave" // top-0 h-full に変更して隙間を防止
+            className="absolute top-0 left-0 w-full h-full pb-8 animate-nagi-wave" // top-0 h-full に変更して隙間を防止
             viewBox="0 0 100 100" 
             preserveAspectRatio="none"
             style={{ filter: 'saturate(1.8) brightness(1.1)' }}
