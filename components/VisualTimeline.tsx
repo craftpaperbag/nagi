@@ -122,7 +122,7 @@ export default function VisualTimeline({
           </div>
         )}
 
-        <div className={`transition-opacity duration-300 ${isPending ? 'opacity-40' : 'opacity-100'}`}>
+        <div className={`absolute inset-0 transition-opacity duration-300 ${isPending ? 'opacity-40' : 'opacity-100'}`}>
           {/* 1. 背景の波レイヤー (24時間分) */}
           <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
             <svg 
