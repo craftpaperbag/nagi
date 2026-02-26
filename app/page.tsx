@@ -4,12 +4,13 @@ import LoginForm from '@/components/LoginForm';
 import QRCode from 'qrcode';
 import DatePicker from '@/components/DatePicker';
 import { revalidatePath } from 'next/cache';
-import VisualTimeline from '@/components/VisualTimeline';
+import DashboardView from '@/components/DashboardView';
 import Link from 'next/link';
 import ScrollRestorer from '@/components/ScrollRestorer';
 import CopyButton from '@/components/CopyButton';
 import { TransitionProvider } from '@/components/TransitionContext';
 import AppSelector from '@/components/AppSelector';
+import DisplaySettings from '@/components/DisplaySettings';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -76,6 +77,23 @@ async function toggleTargetApp(formData: FormData) {
     await redisClient.set(`user:${userId}`, user);
   }
   
+  revalidatePath('/');
+}
+
+async function resetTargetApps() {
+  'use server';
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+
+  if (!userId) return;
+
+  const user = await redisClient.get<User>(`user:${userId}`);
+  if (user) {
+    user.target_apps = [];
+    await redisClient.set(`user:${userId}`, user);
+  }
+
   revalidatePath('/');
 }
 
@@ -163,9 +181,10 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   let user: User | null = null;
   let logs: LogEntry[] = [];
   let prevDayLastLog: LogEntry | null = null;
+  let userId: string | null = null;
 
   if (sessionId) {
-    const userId = await redisClient.get<string>(`session:${sessionId}`);
+    userId = await redisClient.get<string>(`session:${sessionId}`);
     if (userId) {
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
@@ -184,6 +203,13 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   }, {} as Record<string, number>);
 
   const uniqueApps = Object.keys(appCounts).sort((a, b) => appCounts[b] - appCounts[a]);
+
+  // デフォルト選択: target_appsが空で、ログがある場合、最もログ数の多いアプリを自動選択
+  if (user && userId && (!user.target_apps || user.target_apps.length === 0) && uniqueApps.length > 0) {
+    user.target_apps = [uniqueApps[0]];
+    await redisClient.set(`user:${userId}`, user);
+  }
+
   // ターゲットに設定されているが今日のログにはないアプリも表示に含める
   const displayApps = user ? Array.from(new Set([...uniqueApps, ...(user.target_apps || [])])) : uniqueApps;
 
@@ -208,41 +234,80 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             <div className="flex flex-col gap-8">
               <header className="flex flex-col gap-4 border-b border-slate-100/50 pb-4">
                 <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-500 font-light">こんにちは、{user.email} さん</p>
-                  <div className="flex gap-4 items-center">
-                    {/* 設定リンクの追加 */}
-                    <Link href={showSettings ? "/" : "?settings=true"} className="text-sm text-slate-500 hover:underline">
-                      {showSettings ? '戻る' : '設定'}
-                    </Link>
-                    <form action="/api/auth/logout" method="POST" className="flex items-center">
-                      <button type="submit" className="text-sm text-red-400 hover:underline">
-                        ログアウト
-                      </button>
-                    </form>
-                  </div>
+                  {showSettings ? (
+                    <>
+                      <h1 className="text-lg font-bold text-slate-700">設定</h1>
+                      <Link
+                        href="/"
+                        className="px-4 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                      >
+                        ← ダッシュボードに戻る
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 font-light">こんにちは、{user.email} さん</p>
+                      <Link href="?settings=true" className="text-sm text-slate-500 hover:underline">
+                        設定
+                      </Link>
+                    </>
+                  )}
                 </div>
               </header>
 
               {/* 設定画面の表示 */}
               {showSettings && (
                 <section className="flex flex-col gap-10 py-4">
+                  <div className="flex flex-col gap-3 pb-6 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-700">nagiについて</h2>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      スマホに触れていた時間を石、離れていた時間を波として映すだけの記録帳です。
+                    </p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      通知も点数もありません。眺めたいときに、眺めてください。
+                    </p>
+                    <p className="text-xs text-slate-500 leading-relaxed mt-2">
+                      <a href="https://github.com/craftpaperbag" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-800 underline">
+                        craftpaperbag
+                      </a>
+                      が家族のために作っています。
+                      <a href="https://github.com/craftpaperbag/nagi" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-800 underline">
+                        ソースコード
+                      </a>
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4 pb-6 border-b border-slate-100">
+                    <DisplaySettings />
+                  </div>
+
                   <div className="flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">API Token</h2>
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
                       <code className="text-xs text-blue-600 break-all font-mono">{user.api_token}</code>
                       <CopyButton text={user.api_token} />
                     </div>
-                    <p className="text-[10px] text-slate-400 italic">このトークンはiOSショートカットの認証に使用されます。</p>
+                    <p className="text-[10px] text-slate-400 italic">これはあなた専用のトークンです。iOSショートカットとの連携に使います。</p>
                   </div>
 
                   <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Guide</h2>
-                    <p className="text-xs text-slate-500">セットアップガイドをダッシュボードに再表示します。</p>
+                    <p className="text-xs text-slate-500">はじめの手順をもう一度見たいときに。</p>
                     <form action={updateSetupStatus}>
                       <input type="hidden" name="userId" value={user.id} />
                       <input type="hidden" name="status" value="false" />
                       <button type="submit" className="text-xs bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition-colors font-medium">
                         ガイドを再表示する
+                      </button>
+                    </form>
+                  </div>
+
+                  <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
+                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">アカウント</h2>
+                    <p className="text-xs text-slate-500">{user.email} でログイン中</p>
+                    <form action="/api/auth/logout" method="POST">
+                      <button type="submit" className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-full transition-colors font-medium border border-red-100">
+                        ログアウト
                       </button>
                     </form>
                   </div>
@@ -252,10 +317,12 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
               {!showSettings && (
                 <>
                   {/* グローバル日付選択 */}
-                  <div className="flex justify-center mb-2">
-                    <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
-                      <DatePicker defaultValue={selectedDate} />
+                  <div className="sticky top-0 z-50 -mx-8 px-8 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-100/50 mb-4">
+                    <div className="flex justify-center">
+                      <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-md">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
+                        <DatePicker defaultValue={selectedDate} />
+                      </div>
                     </div>
                   </div>
 
@@ -328,28 +395,39 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   <section className="min-h-[600px]">
                     {/* 新しい視覚的タイムライン */}
                     <div className="mb-12">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-xl font-bold">タイムライン</h2>
+                      {/* アプリ選択エリア (sticky) */}
+                      <div className="sticky top-[60px] z-40 -mx-8 px-8 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-100/50 mb-6">
+                        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                           <Link
                             href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
                             scroll={false}
-                            className="text-[10px] px-2 py-0.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
+                            className="p-1.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
+                            aria-label={isLarge ? '標準サイズ' : '大きく表示'}
                           >
-                            {isLarge ? '標準サイズ' : '大きく表示'}
+                            {isLarge ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                              </svg>
+                            )}
                           </Link>
+                          <AppSelector
+                            displayApps={displayApps}
+                            targetApps={user.target_apps || []}
+                            toggleAction={toggleTargetApp}
+                            resetAction={resetTargetApps}
+                            topApp={uniqueApps[0]}
+                          />
                         </div>
-                        <AppSelector 
-                          displayApps={displayApps} 
-                          targetApps={user.target_apps || []} 
-                          toggleAction={toggleTargetApp} 
-                        />
                       </div>
-                      <VisualTimeline 
-                        logs={logs} 
-                        selectedDate={selectedDate} 
-                        targetApps={user.target_apps || []} 
-                        isLarge={isLarge} 
+                      <DashboardView
+                        logs={logs}
+                        selectedDate={selectedDate}
+                        targetApps={user.target_apps || []}
+                        isLarge={isLarge}
                         prevDayLastLog={prevDayLastLog}
                       />
                       {(!user.target_apps || user.target_apps.length === 0) && displayApps.length > 0 && (
