@@ -314,7 +314,87 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                 </section>
               )}
 
-              {!showSettings && (
+              {/* 設定ガイド表示 (セットアップ未完了時) */}
+              {!showSettings && !user.setup_completed && (
+                <section className="flex flex-col gap-8 py-4">
+                  <div className="flex flex-col gap-3">
+                    <h2 className="text-base font-bold text-slate-700">はじめに</h2>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      nagiはスマホの使用時間を静かに記録するアプリです。
+                    </p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      記録をはじめるには、お使いのiPhoneに「ショートカット」を追加する必要があります。
+                      ショートカットが、アプリを開いたり閉じたりしたタイミングを自動で記録してくれます。
+                    </p>
+                  </div>
+
+                  {/* Step 1: Install */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">1</span>
+                      <h3 className="text-sm font-bold text-slate-700">ショートカットをインストール</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      iPhoneの「ショートカット」アプリに、nagiの記録用ショートカットを追加します。
+                      下のボタンを押すか、QRコードをiPhoneで読み取ってください。
+                    </p>
+                    <div className="flex flex-col items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                      {shortcutQr && (
+                        <img src={shortcutQr} alt="Install Shortcut QR" className="w-36 h-36" />
+                      )}
+                      <a
+                        href={shortcutUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-full max-w-xs"
+                      >
+                        ショートカットを追加する
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Setup */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">2</span>
+                      <h3 className="text-sm font-bold text-slate-700">あなたのアカウントと連携する</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      追加したショートカットに、あなたのアカウント情報を設定します。
+                      下のボタンを押すか、QRコードを読み取ると自動で設定が完了します。
+                    </p>
+                    <div className="flex flex-col items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                      {runShortcutQr && (
+                        <img src={runShortcutQr} alt="Setup Shortcut QR" className="w-36 h-36" />
+                      )}
+                      <a
+                        href={runShortcutUrl}
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white text-xs font-medium rounded-full hover:bg-blue-500 transition-all w-full max-w-xs"
+                      >
+                        アカウント連携を実行する
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* 補足説明 + 完了ボタン */}
+                  <div className="flex flex-col gap-6 items-center pt-4">
+                    <p className="text-xs text-slate-400 leading-relaxed text-center max-w-sm">
+                      両方の手順が終わったら、下のボタンを押してください。
+                      ダッシュボードが表示され、記録を見られるようになります。
+                    </p>
+                    <form action={updateSetupStatus}>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input type="hidden" name="status" value="true" />
+                      <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                        設定が完了した
+                      </button>
+                    </form>
+                  </div>
+                </section>
+              )}
+
+              {/* ダッシュボード表示 (セットアップ完了後) */}
+              {!showSettings && user.setup_completed && (
                 <>
                   {/* グローバル日付選択 */}
                   <div className="sticky top-0 z-50 -mx-8 px-8 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-100/50 mb-4">
@@ -326,72 +406,6 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     </div>
                   </div>
 
-                  {/* iOSショートカット設定セクション (条件付き表示) */}
-                  {!user.setup_completed && (
-                    <section className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <h2 className="text-lg font-bold mb-8 flex items-center gap-2 text-slate-800 border-b border-slate-200 pb-2">
-                        <span>📱</span> iOSショートカットの設定
-                      </h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Step 1: Install */}
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold">1</span>
-                            <h3 className="text-sm font-bold text-slate-700">ショートカットをインストール</h3>
-                          </div>
-                          <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">
-                            iPhoneで下のボタンを押すか、QRコードをスキャンしてショートカットを追加してください。
-                          </p>
-                          <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                            {shortcutQr && (
-                              <img src={shortcutQr} alt="Install Shortcut QR" className="w-32 h-32" />
-                            )}
-                            <a 
-                              href={shortcutUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center px-6 py-2 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-full"
-                            >
-                              インストール
-                            </a>
-                          </div>
-                        </div>
-
-                        {/* Step 2: Setup */}
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold">2</span>
-                            <h3 className="text-sm font-bold text-slate-700">APIキーを自動設定</h3>
-                          </div>
-                          <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">
-                            インストール後、このQRコードをスキャンしてショートカットを実行すると、<strong>APIキーが自動設定</strong>されます。
-                          </p>
-                          <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                            {runShortcutQr && (
-                              <img src={runShortcutQr} alt="Setup Shortcut QR" className="w-32 h-32" />
-                            )}
-                            <a 
-                              href={runShortcutUrl}
-                              className="inline-flex items-center justify-center px-6 py-2 bg-blue-600 text-white text-xs font-medium rounded-full hover:bg-blue-500 transition-all w-full"
-                            >
-                              設定を実行
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* 完了ボタンの追加 */}
-                      <form action={updateSetupStatus} className="mt-12 flex justify-center border-t border-slate-200 pt-8">
-                        <input type="hidden" name="userId" value={user.id} />
-                        <input type="hidden" name="status" value="true" />
-                        <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                          設定が完了した
-                        </button>
-                      </form>
-                    </section>
-                  )}
-                  
                   <section className="min-h-[600px]">
                     {/* 新しい視覚的タイムライン */}
                     <div className="mb-12">
