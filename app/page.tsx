@@ -12,6 +12,7 @@ import { TransitionProvider } from '@/components/TransitionContext';
 import AppSelector from '@/components/AppSelector';
 import DisplaySettings from '@/components/DisplaySettings';
 import SetupCompleteButton from '@/components/SetupCompleteButton';
+import ShowGuideButton from '@/components/ShowGuideButton';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -291,17 +292,13 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     <p className="text-[10px] text-slate-400 italic">これはあなた専用のトークンです。iOSショートカットとの連携に使います。</p>
                   </div>
 
-                  <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
-                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Guide</h2>
-                    <p className="text-xs text-slate-500">はじめの手順をもう一度見たいときに。</p>
-                    <form action={updateSetupStatus}>
-                      <input type="hidden" name="userId" value={user.id} />
-                      <input type="hidden" name="status" value="false" />
-                      <button type="submit" className="text-xs bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-full transition-colors font-medium">
-                        ガイドを再表示する
-                      </button>
-                    </form>
-                  </div>
+                  {user.setup_completed && (
+                    <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
+                      <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Guide</h2>
+                      <p className="text-xs text-slate-500">はじめの手順をもう一度見たいときに。</p>
+                      <ShowGuideButton userId={user.id} updateSetupStatus={updateSetupStatus} />
+                    </div>
+                  )}
 
                   <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">アカウント</h2>
