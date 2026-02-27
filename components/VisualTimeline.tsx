@@ -1,37 +1,36 @@
 'use client';
 import { useState } from 'react';
 import { useTransitionContext } from './TransitionContext';
+import { computeSegments, computeStoneTotals } from '@/lib/segments';
 
 interface LogEntry {
   ts: number;
   app: string;
 }
 
-export default function VisualTimeline({ 
-  logs, 
-  selectedDate, 
-  targetApps, 
+export default function VisualTimeline({
+  logs,
+  selectedDate,
+  targetApps,
   isLarge,
   prevDayLastLog
-}: { 
-  logs: LogEntry[], 
-  selectedDate: string, 
-  targetApps: string[], 
+}: {
+  logs: LogEntry[],
+  selectedDate: string,
+  targetApps: string[],
   isLarge?: boolean,
   prevDayLastLog?: LogEntry | null
 }) {
   const { isPending } = useTransitionContext();
   const [isStoneHovered, setIsStoneHovered] = useState(false);
   const totalMinutes = 24 * 60;
-  // 日本時間の開始時刻をミリ秒で取得
-  const startOfDay = new Date(`${selectedDate}T00:00:00+09:00`).getTime();
-  
+
   // 現在時刻 (JST) の計算
   const now = new Date();
   const todayStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
   const isToday = selectedDate === todayStr;
   const isFuture = selectedDate > todayStr;
-  
+
   const jstTimeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' });
   const [hours, minutes] = jstTimeStr.split(':').map(Number);
   const currentMin = hours * 60 + minutes;
@@ -39,66 +38,11 @@ export default function VisualTimeline({
   // 描画する終端時刻（分）
   const limitMin = isToday ? currentMin : (isFuture ? 0 : totalMinutes);
 
-  // ログを時間順（昇順）にソート
-  const sortedLogs = [...logs].sort((a, b) => a.ts - b.ts);
-
-  const segments: { start: number; end: number; type: 'stone' | 'wave'; app?: string }[] = [];
-
-  // アプリが選択されている場合のみセグメントを計算
-  if (targetApps.length > 0) {
-    let lastTs = startOfDay;
-    // 初期状態を前日の最終ログに基づいて決定
-    let isStoneActive = prevDayLastLog ? targetApps.includes(prevDayLastLog.app) : false;
-
-    sortedLogs.forEach((log) => {
-      const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
-      const endMin = (log.ts - startOfDay) / (1000 * 60);
-      
-      // 制限時刻で切り捨て
-      const effectiveEndMin = Math.min(endMin, limitMin);
-
-      if (effectiveEndMin > startMin) {
-        const type = isStoneActive ? 'stone' : 'wave';
-        // 直前と同じタイプなら結合
-        if (segments.length > 0 && segments[segments.length - 1].type === type) {
-          segments[segments.length - 1].end = effectiveEndMin;
-        } else {
-          segments.push({
-            start: startMin,
-            end: effectiveEndMin,
-            type,
-            // app名はデバッグ用。現在の状態（直前のログまたは前日最終ログ）に合わせて設定
-            app: isStoneActive ? (prevDayLastLog?.app || 'Unknown') : undefined
-          });
-        }
-      }
-      
-      // 重要：ここで状態を更新する。この log.app の状態が「この時刻以降」の区間に適用される。
-      isStoneActive = targetApps.includes(log.app);
-      lastTs = log.ts;
-      // 次のセグメントのために、現在のログを保持
-      prevDayLastLog = log;
-    });
-
-    // 最後のログから制限時刻まで
-    const startMin = Math.max(0, (lastTs - startOfDay) / (1000 * 60));
-    if (startMin < limitMin) {
-      const type = isStoneActive ? 'stone' : 'wave';
-      if (segments.length > 0 && segments[segments.length - 1].type === type) {
-        segments[segments.length - 1].end = limitMin;
-      } else {
-        segments.push({
-          start: startMin,
-          end: limitMin,
-          type,
-          app: isStoneActive ? (prevDayLastLog?.app || 'Unknown') : undefined
-        });
-      }
-    }
-  }
+  // 共通関数でセグメントを計算
+  const segments = computeSegments(logs, targetApps, selectedDate, prevDayLastLog, limitMin);
 
   // 合計時間の計算 (limitMin まで)
-  const totalStoneMin = segments.reduce((acc, seg) => seg.type === 'stone' ? acc + (seg.end - seg.start) : acc, 0);
+  const { stoneMin: totalStoneMin } = computeStoneTotals(segments);
   const totalWaveMin = limitMin - totalStoneMin;
 
   const formatDuration = (mins: number) => {
@@ -110,11 +54,11 @@ export default function VisualTimeline({
   return (
     <>
       <div className={`relative timeline-container transition-all duration-500 ease-in-out ${
-        isLarge 
-          ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-300/50 shadow-inner' 
+        isLarge
+          ? 'w-screen relative left-1/2 -translate-x-1/2 h-80 rounded-none border-y border-slate-300/50 shadow-inner'
           : 'w-full h-20 rounded-xl border border-slate-300/50 shadow-inner'
       } bg-slate-100`}>
-        
+
         {/* 更新中のオーバーレイを追加 */}
         {isPending && (
           <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/20 backdrop-blur-[1px] transition-opacity duration-300">
@@ -122,7 +66,13 @@ export default function VisualTimeline({
           </div>
         )}
 
-        <div className={`absolute inset-0 transition-opacity duration-300 ${isPending ? 'opacity-40' : 'opacity-100'}`}>
+        {/* アプリが選択されていない場合のメッセージ */}
+        {targetApps.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-sm text-slate-400">上のアプリを選択してタイムラインを表示</p>
+          </div>
+        ) : (
+          <div className={`absolute inset-0 transition-opacity duration-300 ${isPending ? 'opacity-40' : 'opacity-100'}`}>
           {/* 1. 背景の波レイヤー (24時間分) */}
           <div className={`absolute inset-0 bg-white pointer-events-none ${isLarge ? '' : 'rounded-xl'} overflow-hidden`}>
             <svg 
@@ -170,26 +120,22 @@ export default function VisualTimeline({
               return (
                 <div key={i} style={{ width }} className="h-full relative group">
                   {seg.type === 'stone' ? (
-                    <div 
+                    <div
                       className="absolute top-1/4 w-full h-1/2 transition-all duration-300"
-                      style={{ 
-                        filter: isLarge 
-                          ? `drop-shadow(0 ${isStoneHovered ? '8px 12px' : '6px 8px'} rgba(0,0,0,0.4))` 
-                          : `drop-shadow(0 ${isStoneHovered ? '3px 5px' : '2px 3px'} rgba(0,0,0,0.3))`
-                      }}
                       onMouseEnter={() => setIsStoneHovered(true)}
                       onMouseLeave={() => setIsStoneHovered(false)}
                     >
-                      <div 
-                        className={`w-full h-full bg-gradient-to-b from-slate-400 via-slate-600 to-slate-800 stone-mask transition-colors duration-300 ${isStoneHovered ? 'brightness-125' : 'brightness-100'}`}
-                        style={{ 
-                          clipPath: 'polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px)'
+                      <div
+                        className={`w-full h-full bg-slate-600 transition-all duration-300 ${
+                          isLarge ? 'rounded-lg' : 'rounded-md'
+                        } ${isStoneHovered ? 'brightness-110' : 'brightness-100'}`}
+                        style={{
+                          boxShadow: isLarge
+                            ? `0 ${isStoneHovered ? '8px 16px' : '6px 12px'} rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)`
+                            : `0 ${isStoneHovered ? '3px 6px' : '2px 4px'} rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)`
                         }}
-                      >
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)]" />
-                        <div className={`absolute inset-0 bg-black/20 mix-blend-overlay ${isLarge ? 'opacity-40' : 'opacity-20'}`} />
-                      </div>
-                      
+                      />
+
                       {/* ツールチップ (Stone) */}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
                         <span className="opacity-70">拘束:</span> {formatDuration(totalStoneMin)}
@@ -232,6 +178,7 @@ export default function VisualTimeline({
             <span>23:59</span>
           </div>
         </div>
+        )}
       </div>
 
       {/* 凡例の追加 */}
