@@ -11,6 +11,7 @@ import CopyButton from '@/components/CopyButton';
 import { TransitionProvider } from '@/components/TransitionContext';
 import AppSelector from '@/components/AppSelector';
 import DisplaySettings from '@/components/DisplaySettings';
+import SetupCompleteButton from '@/components/SetupCompleteButton';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -382,13 +383,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                       両方の手順が終わったら、下のボタンを押してください。
                       ダッシュボードが表示され、記録を見られるようになります。
                     </p>
-                    <form action={updateSetupStatus}>
-                      <input type="hidden" name="userId" value={user.id} />
-                      <input type="hidden" name="status" value="true" />
-                      <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                        設定が完了した
-                      </button>
-                    </form>
+                    <SetupCompleteButton userId={user.id} updateSetupStatus={updateSetupStatus} />
                   </div>
                 </section>
               )}
