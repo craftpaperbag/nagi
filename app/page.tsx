@@ -396,47 +396,44 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
               {/* ダッシュボード表示 (セットアップ完了後) */}
               {!showSettings && user.setup_completed && (
                 <>
-                  {/* グローバル日付選択 */}
-                  <div className="sticky top-0 z-50 -mx-8 px-8 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-100/50 mb-4">
-                    <div className="flex justify-center">
+                  {/* 統合ヘッダー: 日付選択 + アプリ選択 */}
+                  <div className="sticky top-0 z-50 w-[100vw] ml-[calc(-50vw+50%)] px-8 pt-3 pb-3 mb-4 bg-white/70 backdrop-blur-md border-b border-slate-100/50">
+                    <div className="flex justify-center mb-3">
                       <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-md">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
                         <DatePicker defaultValue={selectedDate} />
                       </div>
+                    </div>
+                    <div className="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <Link
+                        href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
+                        scroll={false}
+                        className="p-1.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
+                        aria-label={isLarge ? '標準サイズ' : '大きく表示'}
+                      >
+                        {isLarge ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                          </svg>
+                        )}
+                      </Link>
+                      <AppSelector
+                        displayApps={displayApps}
+                        targetApps={user.target_apps || []}
+                        toggleAction={toggleTargetApp}
+                        resetAction={resetTargetApps}
+                        topApp={uniqueApps[0]}
+                      />
                     </div>
                   </div>
 
                   <section className="min-h-[600px]">
                     {/* 新しい視覚的タイムライン */}
                     <div className="mb-12">
-                      {/* アプリ選択エリア (sticky) */}
-                      <div className="sticky top-[60px] z-40 -mx-8 px-8 py-3 bg-white/80 backdrop-blur-sm border-b border-slate-100/50 mb-6">
-                        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                          <Link
-                            href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
-                            scroll={false}
-                            className="p-1.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
-                            aria-label={isLarge ? '標準サイズ' : '大きく表示'}
-                          >
-                            {isLarge ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                              </svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                              </svg>
-                            )}
-                          </Link>
-                          <AppSelector
-                            displayApps={displayApps}
-                            targetApps={user.target_apps || []}
-                            toggleAction={toggleTargetApp}
-                            resetAction={resetTargetApps}
-                            topApp={uniqueApps[0]}
-                          />
-                        </div>
-                      </div>
                       <DashboardView
                         logs={logs}
                         selectedDate={selectedDate}
