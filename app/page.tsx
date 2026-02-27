@@ -4,12 +4,13 @@ import LoginForm from '@/components/LoginForm';
 import QRCode from 'qrcode';
 import DatePicker from '@/components/DatePicker';
 import { revalidatePath } from 'next/cache';
-import VisualTimeline from '@/components/VisualTimeline';
+import DashboardView from '@/components/DashboardView';
 import Link from 'next/link';
 import ScrollRestorer from '@/components/ScrollRestorer';
 import CopyButton from '@/components/CopyButton';
 import { TransitionProvider } from '@/components/TransitionContext';
 import AppSelector from '@/components/AppSelector';
+import DisplaySettings from '@/components/DisplaySettings';
 
 // 仮のLogEntryインターフェース
 interface LogEntry {
@@ -76,6 +77,23 @@ async function toggleTargetApp(formData: FormData) {
     await redisClient.set(`user:${userId}`, user);
   }
   
+  revalidatePath('/');
+}
+
+async function resetTargetApps() {
+  'use server';
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+
+  if (!userId) return;
+
+  const user = await redisClient.get<User>(`user:${userId}`);
+  if (user) {
+    user.target_apps = [];
+    await redisClient.set(`user:${userId}`, user);
+  }
+
   revalidatePath('/');
 }
 
@@ -163,9 +181,10 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   let user: User | null = null;
   let logs: LogEntry[] = [];
   let prevDayLastLog: LogEntry | null = null;
+  let userId: string | null = null;
 
   if (sessionId) {
-    const userId = await redisClient.get<string>(`session:${sessionId}`);
+    userId = await redisClient.get<string>(`session:${sessionId}`);
     if (userId) {
       user = await redisClient.get<User>(`user:${userId}`);
       if (user) {
@@ -184,6 +203,13 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
   }, {} as Record<string, number>);
 
   const uniqueApps = Object.keys(appCounts).sort((a, b) => appCounts[b] - appCounts[a]);
+
+  // デフォルト選択: target_appsが空で、ログがある場合、最もログ数の多いアプリを自動選択
+  if (user && userId && (!user.target_apps || user.target_apps.length === 0) && uniqueApps.length > 0) {
+    user.target_apps = [uniqueApps[0]];
+    await redisClient.set(`user:${userId}`, user);
+  }
+
   // ターゲットに設定されているが今日のログにはないアプリも表示に含める
   const displayApps = user ? Array.from(new Set([...uniqueApps, ...(user.target_apps || [])])) : uniqueApps;
 
@@ -208,36 +234,65 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             <div className="flex flex-col gap-8">
               <header className="flex flex-col gap-4 border-b border-slate-100/50 pb-4">
                 <div className="flex justify-between items-center">
-                  <p className="text-sm text-gray-500 font-light">こんにちは、{user.email} さん</p>
-                  <div className="flex gap-4 items-center">
-                    {/* 設定リンクの追加 */}
-                    <Link href={showSettings ? "/" : "?settings=true"} className="text-sm text-slate-500 hover:underline">
-                      {showSettings ? '戻る' : '設定'}
-                    </Link>
-                    <form action="/api/auth/logout" method="POST" className="flex items-center">
-                      <button type="submit" className="text-sm text-red-400 hover:underline">
-                        ログアウト
-                      </button>
-                    </form>
-                  </div>
+                  {showSettings ? (
+                    <>
+                      <h1 className="text-lg font-bold text-slate-700">設定</h1>
+                      <Link
+                        href="/"
+                        className="px-4 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                      >
+                        ← ダッシュボードに戻る
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 font-light">こんにちは、{user.email} さん</p>
+                      <Link href="?settings=true" className="text-sm text-slate-500 hover:underline">
+                        設定
+                      </Link>
+                    </>
+                  )}
                 </div>
               </header>
 
               {/* 設定画面の表示 */}
               {showSettings && (
                 <section className="flex flex-col gap-10 py-4">
+                  <div className="flex flex-col gap-3 pb-6 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-700">nagiについて</h2>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      スマホに触れていた時間を石、離れていた時間を波として映すだけの記録帳です。
+                    </p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      通知も点数もありません。眺めたいときに、眺めてください。
+                    </p>
+                    <p className="text-xs text-slate-500 leading-relaxed mt-2">
+                      <a href="https://github.com/craftpaperbag" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-800 underline">
+                        craftpaperbag
+                      </a>
+                      が家族のために作っています。
+                      <a href="https://github.com/craftpaperbag/nagi" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-800 underline">
+                        ソースコード
+                      </a>
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4 pb-6 border-b border-slate-100">
+                    <DisplaySettings />
+                  </div>
+
                   <div className="flex flex-col gap-4">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">API Token</h2>
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
                       <code className="text-xs text-blue-600 break-all font-mono">{user.api_token}</code>
                       <CopyButton text={user.api_token} />
                     </div>
-                    <p className="text-[10px] text-slate-400 italic">このトークンはiOSショートカットの認証に使用されます。</p>
+                    <p className="text-[10px] text-slate-400 italic">これはあなた専用のトークンです。iOSショートカットとの連携に使います。</p>
                   </div>
 
                   <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Guide</h2>
-                    <p className="text-xs text-slate-500">セットアップガイドをダッシュボードに再表示します。</p>
+                    <p className="text-xs text-slate-500">はじめの手順をもう一度見たいときに。</p>
                     <form action={updateSetupStatus}>
                       <input type="hidden" name="userId" value={user.id} />
                       <input type="hidden" name="status" value="false" />
@@ -246,110 +301,144 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                       </button>
                     </form>
                   </div>
+
+                  <div className="flex flex-col gap-4 border-t border-slate-100 pt-10">
+                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">アカウント</h2>
+                    <p className="text-xs text-slate-500">{user.email} でログイン中</p>
+                    <form action="/api/auth/logout" method="POST">
+                      <button type="submit" className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-full transition-colors font-medium border border-red-100">
+                        ログアウト
+                      </button>
+                    </form>
+                  </div>
                 </section>
               )}
 
-              {!showSettings && (
-                <>
-                  {/* グローバル日付選択 */}
-                  <div className="flex justify-center mb-2">
-                    <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
-                      <DatePicker defaultValue={selectedDate} />
+              {/* 設定ガイド表示 (セットアップ未完了時) */}
+              {!showSettings && !user.setup_completed && (
+                <section className="flex flex-col gap-8 py-4">
+                  <div className="flex flex-col gap-3">
+                    <h2 className="text-base font-bold text-slate-700">はじめに</h2>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      nagiはスマホの使用時間を静かに記録するアプリです。
+                    </p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      記録をはじめるには、お使いのiPhoneに「ショートカット」を追加する必要があります。
+                      ショートカットが、アプリを開いたり閉じたりしたタイミングを自動で記録してくれます。
+                    </p>
+                  </div>
+
+                  {/* Step 1: Install */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">1</span>
+                      <h3 className="text-sm font-bold text-slate-700">ショートカットをインストール</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      iPhoneの「ショートカット」アプリに、nagiの記録用ショートカットを追加します。
+                      下のボタンを押すか、QRコードをiPhoneで読み取ってください。
+                    </p>
+                    <div className="flex flex-col items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                      {shortcutQr && (
+                        <img src={shortcutQr} alt="Install Shortcut QR" className="w-36 h-36" />
+                      )}
+                      <a
+                        href={shortcutUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-full max-w-xs"
+                      >
+                        ショートカットを追加する
+                      </a>
                     </div>
                   </div>
 
-                  {/* iOSショートカット設定セクション (条件付き表示) */}
-                  {!user.setup_completed && (
-                    <section className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                      <h2 className="text-lg font-bold mb-8 flex items-center gap-2 text-slate-800 border-b border-slate-200 pb-2">
-                        <span>📱</span> iOSショートカットの設定
-                      </h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        {/* Step 1: Install */}
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold">1</span>
-                            <h3 className="text-sm font-bold text-slate-700">ショートカットをインストール</h3>
-                          </div>
-                          <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">
-                            iPhoneで下のボタンを押すか、QRコードをスキャンしてショートカットを追加してください。
-                          </p>
-                          <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                            {shortcutQr && (
-                              <img src={shortcutQr} alt="Install Shortcut QR" className="w-32 h-32" />
-                            )}
-                            <a 
-                              href={shortcutUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center px-6 py-2 bg-slate-900 text-white text-xs font-medium rounded-full hover:bg-slate-800 transition-all w-full"
-                            >
-                              インストール
-                            </a>
-                          </div>
-                        </div>
+                  {/* Step 2: Setup */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">2</span>
+                      <h3 className="text-sm font-bold text-slate-700">あなたのアカウントと連携する</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      追加したショートカットに、あなたのアカウント情報を設定します。
+                      下のボタンを押すか、QRコードを読み取ると自動で設定が完了します。
+                    </p>
+                    <div className="flex flex-col items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                      {runShortcutQr && (
+                        <img src={runShortcutQr} alt="Setup Shortcut QR" className="w-36 h-36" />
+                      )}
+                      <a
+                        href={runShortcutUrl}
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 text-white text-xs font-medium rounded-full hover:bg-blue-500 transition-all w-full max-w-xs"
+                      >
+                        アカウント連携を実行する
+                      </a>
+                    </div>
+                  </div>
 
-                        {/* Step 2: Setup */}
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-900 text-white text-xs font-bold">2</span>
-                            <h3 className="text-sm font-bold text-slate-700">APIキーを自動設定</h3>
-                          </div>
-                          <p className="text-xs text-slate-500 leading-relaxed min-h-[32px]">
-                            インストール後、このQRコードをスキャンしてショートカットを実行すると、<strong>APIキーが自動設定</strong>されます。
-                          </p>
-                          <div className="flex flex-col items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                            {runShortcutQr && (
-                              <img src={runShortcutQr} alt="Setup Shortcut QR" className="w-32 h-32" />
-                            )}
-                            <a 
-                              href={runShortcutUrl}
-                              className="inline-flex items-center justify-center px-6 py-2 bg-blue-600 text-white text-xs font-medium rounded-full hover:bg-blue-500 transition-all w-full"
-                            >
-                              設定を実行
-                            </a>
-                          </div>
-                        </div>
+                  {/* 補足説明 + 完了ボタン */}
+                  <div className="flex flex-col gap-6 items-center pt-4">
+                    <p className="text-xs text-slate-400 leading-relaxed text-center max-w-sm">
+                      両方の手順が終わったら、下のボタンを押してください。
+                      ダッシュボードが表示され、記録を見られるようになります。
+                    </p>
+                    <form action={updateSetupStatus}>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input type="hidden" name="status" value="true" />
+                      <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
+                        設定が完了した
+                      </button>
+                    </form>
+                  </div>
+                </section>
+              )}
+
+              {/* ダッシュボード表示 (セットアップ完了後) */}
+              {!showSettings && user.setup_completed && (
+                <>
+                  {/* 統合ヘッダー: 日付選択 + アプリ選択 */}
+                  <div className="sticky top-0 z-50 w-[100vw] ml-[calc(-50vw+50%)] px-8 pt-3 pb-3 mb-4 bg-white/70 backdrop-blur-md border-b border-slate-100/50">
+                    <div className="flex justify-center mb-3">
+                      <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-md">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
+                        <DatePicker defaultValue={selectedDate} />
                       </div>
-                      
-                      {/* 完了ボタンの追加 */}
-                      <form action={updateSetupStatus} className="mt-12 flex justify-center border-t border-slate-200 pt-8">
-                        <input type="hidden" name="userId" value={user.id} />
-                        <input type="hidden" name="status" value="true" />
-                        <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200">
-                          設定が完了した
-                        </button>
-                      </form>
-                    </section>
-                  )}
-                  
+                    </div>
+                    <div className="max-w-2xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <Link
+                        href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
+                        scroll={false}
+                        className="p-1.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
+                        aria-label={isLarge ? '標準サイズ' : '大きく表示'}
+                      >
+                        {isLarge ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                          </svg>
+                        )}
+                      </Link>
+                      <AppSelector
+                        displayApps={displayApps}
+                        targetApps={user.target_apps || []}
+                        toggleAction={toggleTargetApp}
+                        resetAction={resetTargetApps}
+                        topApp={uniqueApps[0]}
+                      />
+                    </div>
+                  </div>
+
                   <section className="min-h-[600px]">
                     {/* 新しい視覚的タイムライン */}
                     <div className="mb-12">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-xl font-bold">タイムライン</h2>
-                          <Link
-                            href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
-                            scroll={false}
-                            className="text-[10px] px-2 py-0.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
-                          >
-                            {isLarge ? '標準サイズ' : '大きく表示'}
-                          </Link>
-                        </div>
-                        <AppSelector 
-                          displayApps={displayApps} 
-                          targetApps={user.target_apps || []} 
-                          toggleAction={toggleTargetApp} 
-                        />
-                      </div>
-                      <VisualTimeline 
-                        logs={logs} 
-                        selectedDate={selectedDate} 
-                        targetApps={user.target_apps || []} 
-                        isLarge={isLarge} 
+                      <DashboardView
+                        logs={logs}
+                        selectedDate={selectedDate}
+                        targetApps={user.target_apps || []}
+                        isLarge={isLarge}
                         prevDayLastLog={prevDayLastLog}
                       />
                       {(!user.target_apps || user.target_apps.length === 0) && displayApps.length > 0 && (

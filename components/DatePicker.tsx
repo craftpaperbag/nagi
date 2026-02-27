@@ -36,39 +36,39 @@ export default function DatePicker({ defaultValue }: { defaultValue: string }) {
   };
 
   return (
-    <div className="flex items-center gap-1">
-      <button 
+    <div className="flex items-center gap-2">
+      <button
         type="button"
         onClick={() => shiftDate(-1)}
-        className="p-1 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors active:scale-95"
         title="前日"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      
-      <input 
-        type="date" 
-        name="date" 
+
+      <input
+        type="date"
+        name="date"
         value={defaultValue}
         onChange={handleChange}
-        className="text-[13px] px-1 py-1 outline-none bg-transparent cursor-pointer font-medium text-slate-600"
+        className="text-sm px-2 py-1.5 outline-none bg-transparent cursor-pointer font-medium text-slate-600"
       />
 
-      <button 
+      <button
         type="button"
         onClick={() => shiftDate(1)}
-        className="p-1 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors active:scale-95"
         title="翌日"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </button>
 
-      <div className="w-px h-3 bg-slate-200 mx-1" />
+      <div className="w-px h-4 bg-slate-200 mx-1" />
 
-      <button 
+      <button
         type="button"
         onClick={goToday}
-        className="text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-tight px-2 py-1 transition-colors"
+        className="text-xs font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 uppercase tracking-tight px-3 py-1.5 rounded-full transition-colors active:scale-95"
       >
         Today
       </button>
