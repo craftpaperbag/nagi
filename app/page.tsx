@@ -102,6 +102,26 @@ async function resetTargetApps() {
   revalidatePath('/');
 }
 
+async function selectAllTargetApps(formData: FormData) {
+  'use server';
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+  const userId = sessionId ? await redisClient.get<string>(`session:${sessionId}`) : null;
+
+  if (!userId) return;
+
+  const appsJson = formData.get('apps') as string;
+  if (!appsJson) return;
+
+  const user = await redisClient.get<User>(`user:${userId}`);
+  if (user) {
+    user.target_apps = JSON.parse(appsJson);
+    await redisClient.set(`user:${userId}`, user);
+  }
+
+  revalidatePath('/');
+}
+
 // ダミーデータ登録用サーバーアクション
 async function addDummyLog(formData: FormData) {
   'use server';
@@ -475,6 +495,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                           targetApps={user.target_apps || []}
                           toggleAction={toggleTargetApp}
                           resetAction={resetTargetApps}
+                          selectAllAction={selectAllTargetApps}
                           topApp={uniqueApps[0]}
                         />
                       </div>

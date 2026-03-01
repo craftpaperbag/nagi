@@ -6,11 +6,13 @@ interface AppSelectorProps {
   targetApps: string[];
   toggleAction: (formData: FormData) => Promise<void>;
   resetAction: () => Promise<void>;
+  selectAllAction: (formData: FormData) => Promise<void>;
   topApp?: string;
 }
 
-export default function AppSelector({ displayApps, targetApps, toggleAction, resetAction, topApp }: AppSelectorProps) {
+export default function AppSelector({ displayApps, targetApps, toggleAction, resetAction, selectAllAction, topApp }: AppSelectorProps) {
   const { startTransition } = useTransitionContext();
+  const allSelected = displayApps.length > 0 && displayApps.every(app => targetApps.includes(app));
 
   return (
     <div className="flex flex-wrap gap-2 max-w-full items-center">
@@ -24,6 +26,20 @@ export default function AppSelector({ displayApps, targetApps, toggleAction, res
           className="px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-700"
         >
           リセット
+        </button>
+      )}
+      {!allSelected && displayApps.length > 1 && (
+        <button
+          onClick={() => {
+            const formData = new FormData();
+            formData.append('apps', JSON.stringify(displayApps));
+            startTransition(async () => {
+              await selectAllAction(formData);
+            });
+          }}
+          className="px-3 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-all bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200 hover:text-slate-700"
+        >
+          すべて選択
         </button>
       )}
       {displayApps.map(app => {
