@@ -13,6 +13,8 @@ export default function ShowGuideButton({ userId, updateSetupStatus }: ShowGuide
   const [isPending, startTransition] = useTransition();
 
   const handleClick = async () => {
+    localStorage.setItem('nagi-guide-shown-at', Date.now().toString());
+
     const formData = new FormData();
     formData.append('userId', userId);
     formData.append('status', 'false');

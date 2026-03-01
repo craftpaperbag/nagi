@@ -13,6 +13,7 @@ import AppSelector from '@/components/AppSelector';
 import DisplaySettings from '@/components/DisplaySettings';
 import SetupCompleteButton from '@/components/SetupCompleteButton';
 import ShowGuideButton from '@/components/ShowGuideButton';
+import SetupLogDetector from '@/components/SetupLogDetector';
 import CollapsibleHeader from '@/components/CollapsibleHeader';
 
 // 仮のLogEntryインターフェース
@@ -327,6 +328,22 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     </p>
                   </div>
 
+                  {/* ステップインジケーター */}
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {[
+                      { num: 1, label: 'インストール' },
+                      { num: 2, label: 'アカウント連携' },
+                      { num: 3, label: 'オートメーション' },
+                      { num: 4, label: '動作確認' },
+                    ].map((step, i) => (
+                      <div key={step.num} className="flex items-center gap-2 shrink-0">
+                        {i > 0 && <span className="text-slate-200 text-xs">―</span>}
+                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold shrink-0">{step.num}</span>
+                        <span className="text-[11px] text-slate-400">{step.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
                   {/* Step 1: Install */}
                   <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <div className="flex items-center gap-3">
@@ -352,7 +369,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     </div>
                   </div>
 
-                  {/* Step 2: Setup */}
+                  {/* Step 2: アカウント連携 */}
                   <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">2</span>
@@ -375,10 +392,56 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                     </div>
                   </div>
 
+                  {/* Step 3: オートメーション設定 */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">3</span>
+                      <h3 className="text-sm font-bold text-slate-700">オートメーションを設定する</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      アプリの起動・終了を自動で記録するために、iPhoneのオートメーション機能を設定します。
+                    </p>
+                    <ol className="flex flex-col gap-3 text-xs text-slate-600 leading-relaxed list-none">
+                      <li className="flex gap-2">
+                        <span className="text-slate-400 font-bold shrink-0">1.</span>
+                        <span>「ショートカット」アプリを開き、下部の「オートメーション」タブをタップ</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-slate-400 font-bold shrink-0">2.</span>
+                        <span>「個人用オートメーションを作成」→「アプリ」を選択</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-slate-400 font-bold shrink-0">3.</span>
+                        <span>記録したいアプリ(複数可)を選び、<strong>「開いたとき」と「閉じたとき」の両方</strong>にチェック</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-slate-400 font-bold shrink-0">4.</span>
+                        <span>「すぐに実行」を選び、アクションに<strong>nagiのショートカット</strong>を設定</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-slate-400 font-bold shrink-0">5.</span>
+                        <span>「実行時に通知」をオフにする</span>
+                      </li>
+                    </ol>
+                  </div>
+
+                  {/* Step 4: 動作確認 */}
+                  <div className="flex flex-col gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold shrink-0">4</span>
+                      <h3 className="text-sm font-bold text-slate-700">動作を確認する</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      オートメーションを設定したアプリを開いて、閉じてみてください。
+                      しばらくしてからこのページを再読み込みし、ログが表示されれば設定完了です。
+                    </p>
+                    <SetupLogDetector logs={logs} />
+                  </div>
+
                   {/* 補足説明 + 完了ボタン */}
                   <div className="flex flex-col gap-6 items-center pt-4">
                     <p className="text-xs text-slate-400 leading-relaxed text-center max-w-sm">
-                      両方の手順が終わったら、下のボタンを押してください。
+                      すべての手順が終わったら、下のボタンを押してください。
                       ダッシュボードが表示され、記録を見られるようになります。
                     </p>
                     <SetupCompleteButton userId={user.id} updateSetupStatus={updateSetupStatus} />
