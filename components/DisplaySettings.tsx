@@ -8,6 +8,7 @@ export interface DisplayConfig {
   showTimeline: boolean;
   showDots: boolean;
   dotUnit: DotUnit;
+  showLogs: boolean;
 }
 
 const STORAGE_KEY = 'nagi-display-settings';
@@ -15,7 +16,7 @@ const UNIT_OPTIONS: DotUnit[] = [60, 30, 10, 1];
 
 export function getDisplayConfig(): DisplayConfig {
   if (typeof window === 'undefined') {
-    return { showTimeline: true, showDots: false, dotUnit: 30 };
+    return { showTimeline: true, showDots: false, dotUnit: 30, showLogs: true };
   }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -25,10 +26,11 @@ export function getDisplayConfig(): DisplayConfig {
         showTimeline: parsed.showTimeline ?? true,
         showDots: parsed.showDots ?? false,
         dotUnit: parsed.dotUnit ?? 30,
+        showLogs: parsed.showLogs ?? true,
       };
     }
   } catch {}
-  return { showTimeline: true, showDots: false, dotUnit: 30 };
+  return { showTimeline: true, showDots: false, dotUnit: 30, showLogs: true };
 }
 
 export function saveDisplayConfig(config: DisplayConfig) {
@@ -39,7 +41,7 @@ export function saveDisplayConfig(config: DisplayConfig) {
 }
 
 export default function DisplaySettings() {
-  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30 });
+  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30, showLogs: true });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -87,6 +89,22 @@ export default function DisplaySettings() {
             <span
               className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
                 config.showDots ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </label>
+
+        <label className="flex items-center justify-between">
+          <span className="text-xs text-slate-600">ログを表示</span>
+          <button
+            onClick={() => update({ showLogs: !config.showLogs })}
+            className={`relative w-10 h-5 rounded-full transition-colors ${
+              config.showLogs ? 'bg-slate-700' : 'bg-slate-200'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${
+                config.showLogs ? 'translate-x-5' : 'translate-x-0'
               }`}
             />
           </button>
