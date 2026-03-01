@@ -236,8 +236,8 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
           {!user ? (
             <LoginForm />
           ) : (
-            <div className="flex flex-col gap-8">
-              <header className="flex flex-col gap-4 border-b border-slate-100/50 pb-4">
+            <div className="flex flex-col gap-4">
+              <header className="flex flex-col gap-4 border-b border-slate-100/50 pb-3">
                 <div className="flex justify-between items-center">
                   {showSettings ? (
                     <>
@@ -457,8 +457,7 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                   <CollapsibleHeader
                     selectedDate={selectedDate}
                     datePicker={
-                      <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-full border border-slate-200 shadow-md">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">表示日</span>
+                      <div className="flex items-center bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
                         <DatePicker defaultValue={selectedDate} />
                       </div>
                     }
@@ -467,18 +466,9 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
                         <Link
                           href={`?date=${selectedDate}${isLarge ? '' : '&large=true'}${showSettings ? '&settings=true' : ''}`}
                           scroll={false}
-                          className="p-1.5 rounded border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
-                          aria-label={isLarge ? '標準サイズ' : '大きく表示'}
+                          className="px-3 py-1 rounded-full border border-slate-200 text-[11px] font-medium text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
                         >
-                          {isLarge ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-                            </svg>
-                          )}
+                          {isLarge ? '標準サイズ' : '拡大表示'}
                         </Link>
                         <AppSelector
                           displayApps={displayApps}

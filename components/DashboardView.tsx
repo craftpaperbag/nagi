@@ -23,7 +23,7 @@ export default function DashboardView({
   isLarge?: boolean;
   prevDayLastLog?: LogEntry | null;
 }) {
-  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30, showLogs: true });
+  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30, showLogs: false });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

@@ -22,7 +22,7 @@ export default function LogList({
   deleteLog: (formData: FormData) => void;
   isDev: boolean;
 }) {
-  const [showLogs, setShowLogs] = useState(true);
+  const [showLogs, setShowLogs] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

@@ -16,7 +16,7 @@ const UNIT_OPTIONS: DotUnit[] = [60, 30, 10, 1];
 
 export function getDisplayConfig(): DisplayConfig {
   if (typeof window === 'undefined') {
-    return { showTimeline: true, showDots: false, dotUnit: 30, showLogs: true };
+    return { showTimeline: true, showDots: false, dotUnit: 30, showLogs: false };
   }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -26,7 +26,7 @@ export function getDisplayConfig(): DisplayConfig {
         showTimeline: parsed.showTimeline ?? true,
         showDots: parsed.showDots ?? false,
         dotUnit: parsed.dotUnit ?? 30,
-        showLogs: parsed.showLogs ?? true,
+        showLogs: parsed.showLogs ?? false,
       };
     }
   } catch {}
@@ -41,7 +41,7 @@ export function saveDisplayConfig(config: DisplayConfig) {
 }
 
 export default function DisplaySettings() {
-  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30, showLogs: true });
+  const [config, setConfig] = useState<DisplayConfig>({ showTimeline: true, showDots: false, dotUnit: 30, showLogs: false });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
