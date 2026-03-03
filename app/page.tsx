@@ -14,6 +14,7 @@ import DisplaySettings from '@/components/DisplaySettings';
 import SetupCompleteButton from '@/components/SetupCompleteButton';
 import ShowGuideButton from '@/components/ShowGuideButton';
 import SetupLogDetector from '@/components/SetupLogDetector';
+import ScrollToTopLink from '@/components/ScrollToTopLink';
 import CollapsibleHeader from '@/components/CollapsibleHeader';
 import LogList from '@/components/LogList';
 
@@ -259,23 +260,18 @@ export default async function Home(props: { searchParams: Promise<{ date?: strin
             <div className="flex flex-col gap-4">
               <header className="flex flex-col gap-4 border-b border-slate-100/50 pb-3">
                 <div className="flex justify-between items-center">
+                  <ScrollToTopLink />
                   {showSettings ? (
-                    <>
-                      <h1 className="text-lg font-bold text-slate-700">設定</h1>
-                      <Link
-                        href="/"
-                        className="px-4 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                      >
-                        ← ダッシュボードに戻る
-                      </Link>
-                    </>
+                    <Link
+                      href="/"
+                      className="px-4 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                    >
+                      ← ダッシュボードに戻る
+                    </Link>
                   ) : (
-                    <>
-                      <p className="text-sm text-gray-500 font-light">こんにちは、{user.email} さん</p>
-                      <Link href="?settings=true" className="text-sm text-slate-500 hover:underline">
-                        設定
-                      </Link>
-                    </>
+                    <Link href="?settings=true" className="text-sm text-slate-500 hover:underline">
+                      設定
+                    </Link>
                   )}
                 </div>
               </header>
