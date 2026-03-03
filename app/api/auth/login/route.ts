@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 
     // 4. Resendでメール送信
     await resend.emails.send({
-      from: 'nagi <onboarding@resend.dev>', // 運用に合わせて変更
+      from: 'nagi <nagi@send.craftpaperbag.com>',
       to: [email],
       subject: `nagi へのログイン (${timeString})`,
       html: `
