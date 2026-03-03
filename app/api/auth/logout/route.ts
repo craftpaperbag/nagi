@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { redisClient } from '@/lib/redis';
 
-export async function POST() {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
   const sessionId = cookieStore.get('session_id')?.value;
 
@@ -19,7 +19,5 @@ export async function POST() {
     path: '/',
   });
 
-  // 環境変数からベースURLを取得するか、デフォルト値を使用
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  return NextResponse.redirect(new URL('/', baseUrl));
+  return NextResponse.redirect(new URL('/', request.url));
 }
