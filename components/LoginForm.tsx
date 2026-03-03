@@ -63,7 +63,7 @@ export default function LoginForm() {
     return (
       <>
         {waveBg}
-        <div className="text-center p-8 animate-in fade-in duration-700">
+        <div className="flex items-center justify-center min-h-[70vh] text-center p-8 animate-in fade-in duration-700">
           <p className="text-gray-500 font-light">メール送ったよ。リンクから、そっと入ってね。</p>
         </div>
       </>
