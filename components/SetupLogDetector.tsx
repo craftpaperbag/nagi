@@ -14,9 +14,10 @@ const POLL_INTERVAL = 5000;
 
 interface SetupLogDetectorProps {
   logs: LogEntry[];
+  active?: boolean;
 }
 
-export default function SetupLogDetector({ logs }: SetupLogDetectorProps) {
+export default function SetupLogDetector({ logs, active = false }: SetupLogDetectorProps) {
   const router = useRouter();
   const [detected, setDetected] = useState(false);
   const [ready, setReady] = useState(false);
